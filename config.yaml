@@ -1,0 +1,45 @@
+app:
+  name: crypto-trade
+  port: 8001
+  host: 
+  jwt_issuer: "crypto-trade"
+  jwt_secret: "secret"
+  client_id: "crypto-trade"
+redis:
+  host: crypto-trade-redis
+  port: 6379
+  pass: 
+database:
+  host: crypto-trade-db
+  port: 5432
+  user: crypto-trade-user
+  pass: crypto-trade-pass
+  name: crypto-trade
+kafka:
+  brokers:
+    - "kafka:9092"
+  topics:  
+  max_retry: 5
+  max_message_size: 200000
+  return_errors: true
+  return_succes: true
+
+
+allows:
+  methods:
+  - GET
+  - POST
+  - PUT
+  - PATCH
+  - DELETE
+  - OPTIONS
+  headers:
+  - Content-Type
+  - Authorization
+  - X-CSRF-Token
+  - data-api-key
+  origins:
+    - http://localhost:8001
+    - http://localhost:9000
+    - http://localhost:4040
+    - http://localhost:3000

@@ -1,0 +1,69 @@
+{
+    "schemes": [
+        "http",
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "xxx API Documentation",
+        "title": "xxx API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8000",
+    "basePath": "/api/v1",
+    "paths": {
+        "/x": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "lorem ipsum dolor sit amet",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "X Endpoints"
+                ],
+                "summary": "summary for x",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

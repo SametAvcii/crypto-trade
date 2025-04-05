@@ -1,0 +1,46 @@
+basePath: /api/v1
+host: localhost:8000
+info:
+  contact: {}
+  description: xxx API Documentation
+  title: xxx API
+  version: "1.0"
+paths:
+  /x:
+    get:
+      consumes:
+      - application/json
+      description: lorem ipsum dolor sit amet
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: summary for x
+      tags:
+      - X Endpoints
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

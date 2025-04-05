@@ -1,0 +1,1 @@
+# go-base-project-structure
