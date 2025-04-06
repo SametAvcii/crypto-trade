@@ -35,6 +35,7 @@ func InitDB(dbc config.Database) {
 			&entities.Log{},
 			&entities.Symbol{},
 			&entities.Exchange{},
+			&entities.SymbolPrice{},
 		)
 
 	})

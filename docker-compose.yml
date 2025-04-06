@@ -28,7 +28,7 @@ services:
       - ./:/app
       - ./config.yaml:/app/config.yaml
     ports:
-      - 8000:8000
+      - 8001:8001
     depends_on:
       - crypto-trade-db
       - crypto-trade-redis

@@ -12,6 +12,7 @@ import (
 	"github.com/SametAvcii/crypto-trade/app/api/routes"
 	"github.com/SametAvcii/crypto-trade/pkg/config"
 	"github.com/SametAvcii/crypto-trade/pkg/database"
+	"github.com/SametAvcii/crypto-trade/pkg/domains/exchange"
 	"github.com/SametAvcii/crypto-trade/pkg/domains/symbol"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -72,6 +73,11 @@ func LaunchHttpServer(appc config.App, allows config.Allows) {
 	symbolRepo := symbol.NewRepo(pgDB)
 	symbolService := symbol.NewService(symbolRepo)
 	routes.SymbolRoutes(symbolRoute, symbolService)
+
+	exchangeRoute := api.Group("/exchange")
+	exchangeRepo := exchange.NewRepo(pgDB)
+	exchangeService := exchange.NewService(exchangeRepo)
+	routes.ExchangeRoutes(exchangeRoute, exchangeService)
 
 	app.GET("/docs", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "docs/index.html")

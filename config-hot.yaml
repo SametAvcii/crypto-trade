@@ -18,12 +18,19 @@ database:
 
 kafka:
   brokers:
-    - "kafka:9092"
+    - "crypto-trade-kafka:9092"
   topics:
   max_retry: 5
   max_message_size: 200000
   return_errors: true
   return_succes: true
+
+mongo:
+  host: crypto-trade-mongo
+  port: 27017
+  user: crypto-trade-user
+  pass: crypto-trade-pass
+  name: crypto-trade  
 
 allows:
   methods:

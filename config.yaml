@@ -15,15 +15,15 @@ database:
   user: crypto-trade-user
   pass: crypto-trade-pass
   name: crypto-trade
+
 kafka:
   brokers:
-    - "kafka:9092"
-  topics:  
+    - "crypto-trade-kafka:9092"
+  topics:
   max_retry: 5
   max_message_size: 200000
   return_errors: true
   return_succes: true
-
 
 allows:
   methods:

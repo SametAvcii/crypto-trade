@@ -14,6 +14,7 @@ type Config struct {
 	Database Database `yaml:"database"`
 	Allows   Allows   `yaml:"allows"`
 	Kafka    Kafka    `yaml:"kafka"`
+	Mongo    Mongo    `yaml:"mongo"`
 }
 
 type App struct {
@@ -57,6 +58,13 @@ type Database struct {
 	Name string `yaml:"name"`
 }
 
+type Mongo struct {
+	User     string
+	Pass     string
+	Host     string
+	Port     string
+	Database string
+}
 type Allows struct {
 	Methods []string `yaml:"methods"`
 	Origins []string `yaml:"origins"`

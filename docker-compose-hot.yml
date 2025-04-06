@@ -28,10 +28,11 @@ services:
       - ./:/app
       - ./config-hot.yaml:/app/config.yaml
     ports:
-      - 8000:8000
+      - 8001:8001
     depends_on:
       - crypto-trade-db
       - crypto-trade-redis
+      - crypto-trade-kafka
   
   crypto-trade-zookeeper:
     image: wurstmeister/zookeeper:latest
@@ -56,7 +57,7 @@ services:
     networks:
       - crypto-trade
     depends_on:
-      - crypto-trade-zookeeper
+      - crypto-trade-zookeeper  
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
@@ -67,7 +68,7 @@ services:
       - "8080:8080"
     environment:
       KAFKA_CLUSTERS_0_NAME: "local"
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:9092"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "crypto-trade-kafka:9092"
     networks:
       - crypto-trade
     depends_on:
@@ -80,8 +81,41 @@ services:
     networks:
       - crypto-trade
 
+  crypto-trade-mongo:
+    image: "mongo:latest"
+    container_name: crypto-trade-mongo
+    networks:
+      - crypto-trade
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}
+    volumes:
+      - crypto-trade-mongo-data:/data/db
+    restart: always  
+
+  mongo-express:
+    image: mongo-express
+    container_name: crypto-trade-mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      # Tam bağlantı URI'si veriyoruz, böylece hostname doğru olarak çözülüyor.
+      ME_CONFIG_MONGODB_URL: "mongodb://crypto-trade-user:crypto-trade-pass@crypto-trade-mongo:27017/crypto-trade?authSource=admin"
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+    depends_on:
+      - crypto-trade-mongo
+    networks:
+      - crypto-trade
+ 
+
 volumes:
   crypto-trade_data:
+  crypto-trade-mongo-data:
 
 networks:
   crypto-trade:
