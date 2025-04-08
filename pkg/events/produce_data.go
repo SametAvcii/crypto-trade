@@ -1,4 +1,4 @@
-package stream
+package events
 
 import (
 	"fmt"
@@ -6,17 +6,16 @@ import (
 	"strings"
 
 	"github.com/SametAvcii/crypto-trade/pkg/entities"
-	"github.com/SametAvcii/crypto-trade/pkg/events"
 	"github.com/gorilla/websocket"
 	"gorm.io/gorm"
 )
 
 type Stream struct {
 	DB    *gorm.DB
-	Kafka *events.KafkaClient
+	Kafka *KafkaClient
 }
 
-func NewStream(db *gorm.DB, kafkaClient *events.KafkaClient) *Stream {
+func NewStream(db *gorm.DB, kafkaClient *KafkaClient) *Stream {
 	return &Stream{
 		DB:    db,
 		Kafka: kafkaClient,
@@ -51,7 +50,7 @@ func (s *Stream) GetStreamSymbols(exchangeID string) ([]entities.Symbol, error) 
 }
 
 func (s *Stream) StartAllStreams(exchangeID string) error {
-	log.Println("Starting streams for exchange ID:", exchangeID)
+	log.Println("Starting streams for exchange:", exchangeID)
 	wsBase := s.GetStreamWS(exchangeID)
 	if wsBase == "" {
 		return fmt.Errorf("WebSocket URL not found for exchange ID: %s", exchangeID)
@@ -67,6 +66,7 @@ func (s *Stream) StartAllStreams(exchangeID string) error {
 
 		go func() {
 
+			
 			wsURL := fmt.Sprintf("%s/ws/%s@aggTrade", wsBase, strings.ToLower(symbol.Symbol))
 			log.Printf("Connecting to WS for symbol: %s", symbol.Symbol)
 
@@ -80,7 +80,7 @@ func (s *Stream) StartAllStreams(exchangeID string) error {
 	return nil
 }
 
-func startSymbolStream(wsURL, symbol string, writer *events.KafkaClient) error {
+func startSymbolStream(wsURL, symbol string, writer *KafkaClient) error {
 	c, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		return fmt.Errorf("WebSocket dial failed for %s: %v", symbol, err)

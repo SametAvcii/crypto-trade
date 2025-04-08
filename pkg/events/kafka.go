@@ -1,19 +1,12 @@
 package events
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/IBM/sarama"
 	"github.com/SametAvcii/crypto-trade/pkg/config"
-	"github.com/SametAvcii/crypto-trade/pkg/database"
-	"github.com/SametAvcii/crypto-trade/pkg/dtos"
-	"github.com/SametAvcii/crypto-trade/pkg/entities"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type KafkaClient struct {
@@ -25,14 +18,19 @@ type KafkaClient struct {
 var (
 	kafka_client *KafkaClient
 	once         sync.Once
+	KafkaAlive   bool
 )
 
 func KafkaClientNew() *KafkaClient {
 	return kafka_client
 }
-
 func InitKafka(cfg config.Kafka) {
 	once.Do(func() {
+		const (
+			maxRetries    = 5
+			retryInterval = 5 * time.Second
+		)
+
 		var (
 			client sarama.Client
 			err    error
@@ -45,26 +43,70 @@ func InitKafka(cfg config.Kafka) {
 		saramaConfig.Producer.Retry.Max = cfg.MaxRetry
 		saramaConfig.Producer.MaxMessageBytes = cfg.MaxMessageSize // for large messages
 
-		client, err = sarama.NewClient(config.ReadValue().Kafka.Brokers, saramaConfig)
-		if err != nil {
-			log.Fatalf("Could not connect to kafka client: %v", err)
+		// Kafka client connection with retries
+		for attempt := 1; attempt <= maxRetries; attempt++ {
+			client, err = sarama.NewClient(config.ReadValue().Kafka.Brokers, saramaConfig)
+			if err == nil {
+				break
+			}
+
+			log.Printf("Failed to connect to Kafka client (attempt %d/%d): %v", attempt, maxRetries, err)
+			time.Sleep(retryInterval)
 		}
 
-		sync_producer, err := sarama.NewSyncProducerFromClient(client)
 		if err != nil {
-			log.Fatalf("Could not connect to kafka producer: %v", err)
+			log.Fatalf("Failed to connect to Kafka client after %d attempts: %v", maxRetries, err)
 		}
 
-		topics, err := client.Topics()
-		if err != nil {
-			log.Fatalf("Could not connect to kafka topics: %v", err)
+		// Sync producer connection with retries
+		var sync_producer sarama.SyncProducer
+		for attempt := 1; attempt <= maxRetries; attempt++ {
+			sync_producer, err = sarama.NewSyncProducerFromClient(client)
+			if err == nil {
+				break
+			}
+
+			log.Printf("Failed to create Kafka sync producer (attempt %d/%d): %v", attempt, maxRetries, err)
+			time.Sleep(retryInterval)
 		}
 
-		consumer, err := sarama.NewConsumerFromClient(client)
 		if err != nil {
-			log.Fatalf("Could not connect to kafka consumer: %v", err)
+			log.Fatalf("Failed to create Kafka sync producer after %d attempts: %v", maxRetries, err)
 		}
 
+		// Get topics from Kafka with retries
+		var topics []string
+		for attempt := 1; attempt <= maxRetries; attempt++ {
+			topics, err = client.Topics()
+			if err == nil {
+				break
+			}
+
+			log.Printf("Failed to get Kafka topics (attempt %d/%d): %v", attempt, maxRetries, err)
+			time.Sleep(retryInterval)
+		}
+
+		if err != nil {
+			log.Fatalf("Failed to get Kafka topics after %d attempts: %v", maxRetries, err)
+		}
+
+		// Consumer connection with retries
+		var consumer sarama.Consumer
+		for attempt := 1; attempt <= maxRetries; attempt++ {
+			consumer, err = sarama.NewConsumerFromClient(client)
+			if err == nil {
+				break
+			}
+
+			log.Printf("Failed to create Kafka consumer (attempt %d/%d): %v", attempt, maxRetries, err)
+			time.Sleep(retryInterval)
+		}
+
+		if err != nil {
+			log.Fatalf("Failed to create Kafka consumer after %d attempts: %v", maxRetries, err)
+		}
+
+		// Kafka client object setup
 		c := KafkaClient{
 			topics:   topics,
 			producer: sync_producer,
@@ -72,112 +114,37 @@ func InitKafka(cfg config.Kafka) {
 		}
 
 		kafka_client = &c
+		log.Println("Kafka connection initialized successfully.")
 	})
 }
 
-func (k *KafkaClient) Produce(topic, key string, message []byte) (int32, int64, error) {
+func CheckKafkaAlive(cfg config.Kafka) {
+	ticker := time.NewTicker(15 * time.Second)
+	defer ticker.Stop()
 
-	msg := &sarama.ProducerMessage{
-		Topic: topic,
-		Key:   sarama.StringEncoder(key),
-		Value: sarama.StringEncoder(message),
-	}
+	for range ticker.C {
+		saramaConfig := sarama.NewConfig()
+		saramaConfig.Producer.Return.Errors = cfg.ReturnErrors
+		saramaConfig.Producer.Return.Successes = cfg.ReturnSucces
+		saramaConfig.Producer.Retry.Max = cfg.MaxRetry
+		saramaConfig.Producer.MaxMessageBytes = cfg.MaxMessageSize
 
-	return k.producer.SendMessage(msg)
-}
-
-func (k *KafkaClient) ConsumeTrade() error {
-
-	topic := "crypto-trade"
-	log.Println("Starting Kafka consumer...", topic)
-	partitionConsumer, err := k.consumer.ConsumePartition(topic, 0, sarama.OffsetNewest)
-	if err != nil {
-		return fmt.Errorf("Error creating Kafka consumer: %v", err)
-	}
-	defer partitionConsumer.Close()
-
-	//kafka policy
-	for msg := range partitionConsumer.Messages() {
-		log.Printf("Received message from topic %s: %s", msg.Topic, string(msg.Value))
-		var doc bson.M
-		if err := bson.UnmarshalExtJSON(msg.Value, true, &doc); err != nil {
-			log.Printf("Error unmarshalling message into BSON: %v", err)
+		client, err := sarama.NewClient(cfg.Brokers, saramaConfig)
+		if err != nil {
+			log.Println("Kafka client check failed:", err)
+			KafkaAlive = false
 			continue
 		}
-		mongoClient := database.MongoClient()
-		collection := mongoClient.Database("crypto-trade").Collection("crypto-trade")
-		mongoData, err := collection.InsertOne(context.Background(), doc)
+
+		_, err = client.Topics()
 		if err != nil {
-			log.Printf("Error inserting message into MongoDB: %v", err)
-
+			log.Println("Kafka topic fetch failed:", err)
+			KafkaAlive = false
 		} else {
-
-			mongoID := mongoData.InsertedID.(primitive.ObjectID).Hex()
-
-			aggTradeMongo := dtos.AggTradeMongo{
-				MongoID: mongoID,
-				Value:   string(msg.Value),
-			}
-
-			jsonBytes, err := json.Marshal(aggTradeMongo)
-			if err != nil {
-				log.Printf("Error marshaling Kafka message: %v", err)
-				continue
-			}
-
-			partition, offset, err := k.Produce("to-postgres-price", mongoID, jsonBytes)
-			if err != nil {
-				log.Printf("Error sending message to postgres-topic: %v", err)
-			} else {
-				log.Printf("Message sent to postgres-topic at partition %d offset %d", partition, offset)
-			}
-
-			log.Printf("MongoDB updated for id %s with value %s", mongoID, string(msg.Value))
-
-		}
-	}
-
-	return nil
-}
-
-func (k *KafkaClient) ConsumeMongoToPg() error {
-	topic := "to-postgres-price"
-
-	log.Println("Starting Kafka consumer...", topic)
-
-	partitionConsumer, err := k.consumer.ConsumePartition(topic, 0, sarama.OffsetOldest)
-	if err != nil {
-		return fmt.Errorf("Error creating Kafka consumer: %v", err)
-	}
-	log.Printf("Received message for Postgres: %s", topic)
-	defer partitionConsumer.Close()
-	log.Printf("Starting Kafka consumer for Postgres...")
-	var (
-		payload     dtos.AggTradeMongo
-		symbolPrice entities.SymbolPrice
-		aggTrade    dtos.AggTrade
-	)
-
-	for msg := range partitionConsumer.Messages() {
-
-		log.Printf("Received message from topic %s: %s", msg.Topic, string(msg.Value))
-		if err := json.Unmarshal(msg.Value, &payload); err != nil {
-			log.Printf("Error unmarshalling message for Postgres: %v", err)
-
+			KafkaAlive = true
+			log.Println("Kafka is alive.")
 		}
 
-		db := database.PgClient()
-
-		json.Unmarshal([]byte(payload.Value), &aggTrade)
-		symbolPrice.FromDto(&aggTrade)
-		symbolPrice.MongoID = payload.MongoID
-
-		if err := db.Create(&symbolPrice).Error; err != nil {
-			log.Printf("Error inserting message into Postgres: %v", err)
-
-		} else {
-			log.Printf("Postgres updated for id %d with value %s", symbolPrice.ID, payload.Value)
-		}
+		_ = client.Close()
 	}
-	return nil
 }

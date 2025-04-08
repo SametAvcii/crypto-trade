@@ -15,6 +15,12 @@ database:
   user: crypto-trade-user
   pass: crypto-trade-pass
   name: crypto-trade
+  sslmode: disable
+
+consumer:
+  name: crypto-trade-consumer
+  port: 8002  
+  host: 
 
 kafka:
   brokers:

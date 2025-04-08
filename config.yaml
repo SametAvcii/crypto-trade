@@ -15,7 +15,13 @@ database:
   user: crypto-trade-user
   pass: crypto-trade-pass
   name: crypto-trade
+  sslmode: disable
 
+consumer:
+  name: crypto-trade-consumer
+  port: 8002  
+  host: 
+  
 kafka:
   brokers:
     - "crypto-trade-kafka:9092"
@@ -24,6 +30,13 @@ kafka:
   max_message_size: 200000
   return_errors: true
   return_succes: true
+
+mongo:
+  host: crypto-trade-mongo
+  port: 27017
+  user: crypto-trade-user
+  pass: crypto-trade-pass
+  name: crypto-trade  
 
 allows:
   methods:

@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"log"
@@ -7,7 +7,6 @@ import (
 	"github.com/SametAvcii/crypto-trade/pkg/config"
 	"github.com/SametAvcii/crypto-trade/pkg/ctlog"
 	"github.com/SametAvcii/crypto-trade/pkg/database"
-	"github.com/SametAvcii/crypto-trade/pkg/domains/stream"
 	"github.com/SametAvcii/crypto-trade/pkg/entities"
 	"github.com/SametAvcii/crypto-trade/pkg/events"
 	"github.com/SametAvcii/crypto-trade/pkg/server"
@@ -15,12 +14,21 @@ import (
 
 func StartApp() {
 	config := config.InitConfig()
-	database.InitDB(config.Database) 
-	database.InitMongo(config.Mongo)
-	cache.InitRedis(config.Redis)
-	events.InitKafka(config.Kafka)
-	stream := stream.NewStream(database.PgClient(), events.KafkaClientNew())
+	database.InitDB(config.Database)
+	go database.CheckPgAlive(config.Database)
 
+	database.InitMongo(config.Mongo)
+	go database.CheckMongoAlive(config.Mongo)
+
+	cache.InitRedis(config.Redis)
+	go cache.RedisAlive(config.Redis)
+
+	events.InitKafka(config.Kafka)
+	go events.CheckKafkaAlive(config.Kafka)
+	
+	stream := events.NewStream(database.PgClient(), events.KafkaClientNew())
+
+	//running all streams
 	go func() {
 
 		exchanges := stream.GetExchanges()
@@ -38,10 +46,6 @@ func StartApp() {
 			}
 		}
 	}()
-
-	go stream.Kafka.ConsumeMongoToPg()
-
-	go stream.Kafka.ConsumeTrade()
 
 	log.Println("All streams started successfully.")
 

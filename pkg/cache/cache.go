@@ -43,6 +43,27 @@ func RedisClient() *redis.Client {
 	return client
 }
 
+func RedisAlive(rds config.Redis) {
+
+	timeTicker := time.NewTicker(15 * time.Second)
+
+	for range timeTicker.C {
+		rdc := redis.NewClient(&redis.Options{
+			Addr:     net.JoinHostPort(rds.Host, rds.Port),
+			Password: rds.Pass,
+			DB:       0, // use default DB
+		})
+		var ctx = context.Background()
+		_, err := rdc.Ping(ctx).Result()
+		if err != nil {
+			log.Println("Error connecting to Redis: ", err.Error())
+			continue
+		}
+		client = rdc
+	}
+
+}
+
 func UserSessionCheck(id string, token string) bool {
 	val, err := client.Get(context.Background(), fmt.Sprintf("status-wp-user-auth-token-%v", id)).Result()
 	if err != nil {

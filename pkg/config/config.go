@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -15,6 +16,7 @@ type Config struct {
 	Allows   Allows   `yaml:"allows"`
 	Kafka    Kafka    `yaml:"kafka"`
 	Mongo    Mongo    `yaml:"mongo"`
+	Consumer Consumer `yaml:"consumer"`
 }
 
 type App struct {
@@ -26,6 +28,12 @@ type App struct {
 	JwtSecret string `yaml:"jwt_secret"`
 	JwtExpire int    `yaml:"jwt_expire"`
 	ClientID  string `yaml:"client_id"`
+}
+
+type Consumer struct {
+	Name string `yaml:"name"`
+	Port string `yaml:"port"`
+	Host string `yaml:"host"`
 }
 
 type Kafka struct {
@@ -51,11 +59,12 @@ type Redis struct {
 }
 
 type Database struct {
-	Host string `yaml:"host"`
-	Port string `yaml:"port"`
-	User string `yaml:"user"`
-	Pass string `yaml:"pass"`
-	Name string `yaml:"name"`
+	Host    string `yaml:"host"`
+	Port    string `yaml:"port"`
+	User    string `yaml:"user"`
+	Pass    string `yaml:"pass"`
+	Name    string `yaml:"name"`
+	SslMode string `yaml:"sslmode"`
 }
 
 type Mongo struct {
@@ -72,6 +81,13 @@ type Allows struct {
 }
 
 func InitConfig() *Config {
+
+	//write exist path
+
+	// file_name, _ := filepath.Abs("./config.yaml")
+
+	path, _ := os.Executable()
+	fmt.Println("os working directory: ", path)
 	var configs Config
 	file_name, _ := filepath.Abs("./config.yaml")
 	yaml_file, _ := os.ReadFile(file_name)

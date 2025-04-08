@@ -16,44 +16,100 @@ var (
 	mongoClient *mongo.Client
 	mongoOnce   sync.Once
 	mongoErr    error
+	MongoAlive  bool
 )
 
 func InitMongo(cfg config.Mongo) {
 	mongoOnce.Do(func() {
+		const (
+			maxRetries    = 5
+			retryInterval = 5 * time.Second
+		)
+
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		uri := fmt.Sprintf("mongodb://%s:%s@%s:%s/%s?authSource=admin",
-			cfg.User,
-			cfg.Pass,
-			cfg.Host,
-			cfg.Port,
-			cfg.Database,
-		)
-
+		uri := buildMongoURI(cfg)
 		clientOptions := options.Client().ApplyURI(uri)
 
-		mongoClient, mongoErr = mongo.Connect(ctx, clientOptions)
-		if mongoErr != nil {
-			log.Fatalf("Failed to connect to MongoDB: %v", mongoErr)
+		var err error
+		for attempt := 1; attempt <= maxRetries; attempt++ {
+			if err = connectToMongo(ctx, clientOptions); err == nil {
+				break
+			}
+
+			log.Printf("Failed to connect to MongoDB (attempt %d/%d): %v", attempt, maxRetries, err)
+			time.Sleep(retryInterval)
 		}
 
-		// Ping to ensure connection is valid
-		if err := mongoClient.Ping(ctx, nil); err != nil {
-			log.Fatalf("MongoDB ping failed: %v", err)
+		if err != nil {
+			log.Fatalf("MongoDB connection failed after %d attempts: %v", maxRetries, err)
 		}
 
 		log.Println("MongoDB connection initialized successfully.")
 	})
 }
 
+func buildMongoURI(cfg config.Mongo) string {
+	return fmt.Sprintf("mongodb://%s:%s@%s:%s/%s?authSource=admin",
+		cfg.User,
+		cfg.Pass,
+		cfg.Host,
+		cfg.Port,
+		cfg.Database,
+	)
+}
+
+func connectToMongo(ctx context.Context, clientOptions *options.ClientOptions) error {
+	var err error
+	mongoClient, err = mongo.Connect(ctx, clientOptions)
+	if err != nil {
+		return err
+	}
+
+	// Ping to ensure connection is valid
+	if err := mongoClient.Ping(ctx, nil); err != nil {
+		return fmt.Errorf("MongoDB ping failed: %v", err)
+	}
+
+	return nil
+}
+
 func MongoClient() *mongo.Client {
 	if mongoClient == nil {
-		log.Panic("MongoDB is not initialized. Call InitMongo first.")
+		log.Println("MongoDB is not initialized. Call InitMongo first.")
+		return nil
 	}
 	return mongoClient
 }
 
 func MongoDatabase(cfg config.Mongo) *mongo.Database {
 	return MongoClient().Database(cfg.Database)
+}
+
+func CheckMongoAlive(cfg config.Mongo) {
+	ticker := time.NewTicker(15 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		if mongoClient == nil {
+			log.Println("MongoDB client is nil. Trying to establish a connection...")
+
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			uri := buildMongoURI(cfg)
+			clientOptions := options.Client().ApplyURI(uri)
+
+			err := connectToMongo(ctx, clientOptions)
+			if err != nil {
+				MongoAlive = false
+				log.Println("Failed to establish MongoDB connection:", err)
+				continue
+			}
+		} else {
+			MongoAlive = true
+			log.Println("MongoDB Alive:", MongoAlive)
+		}
+	}
 }

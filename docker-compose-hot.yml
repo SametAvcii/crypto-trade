@@ -21,19 +21,44 @@ services:
       dockerfile: Dockerfile.dev
     image: crypto-trade
     container_name: crypto-trade
+    working_dir: /app/cmd/app
     restart: always
     networks:
       - crypto-trade
     volumes:
       - ./:/app
-      - ./config-hot.yaml:/app/config.yaml
+      - ./config-hot.yaml:/app/cmd/app/config.yaml
+      - ./cmd/app/.air.toml:/app/cmd/app/.air.toml
     ports:
-      - 8001:8001
+      - "8001:8001"
+    command: ["air"]
     depends_on:
       - crypto-trade-db
       - crypto-trade-redis
       - crypto-trade-kafka
-  
+
+  crypto-trade-consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: crypto-trade-consumer
+    container_name: crypto-trade-consumer
+    working_dir: /app/cmd/consumer
+    restart: always
+    networks:
+      - crypto-trade
+    volumes:
+      - ./:/app
+      - ./config-hot.yaml:/app/cmd/consumer/config.yaml
+      - ./cmd/consumer/.air.toml:/app/cmd/consumer/.air.toml
+    ports:
+      - "8002:8002"
+    command: ["air"]
+    depends_on:
+      - crypto-trade-db
+      - crypto-trade-redis
+      - crypto-trade-kafka
+
   crypto-trade-zookeeper:
     image: wurstmeister/zookeeper:latest
     container_name: crypto-trade-zookeeper
@@ -60,6 +85,11 @@ services:
       - crypto-trade-zookeeper  
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 10  
 
   crypto-trade-kafka-ui:
     image: provectuslabs/kafka-ui:latest
