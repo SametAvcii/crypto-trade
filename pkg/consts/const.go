@@ -7,3 +7,9 @@ const ( // User
 const ( //Error
 
 )
+
+const (
+	BuySignal  = "BUY"
+	SellSignal = "SELL"
+	HoldSignal = "HOLD"
+)

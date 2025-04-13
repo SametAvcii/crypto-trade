@@ -30,7 +30,7 @@ func InitRedis(rds config.Redis) {
 		var ctx = context.Background()
 		_, err := rdc.Ping(ctx).Result()
 		if err != nil {
-			log.Panic("Error connecting to Redis: ", err.Error())
+			log.Println("Error connecting to Redis: ", err.Error())
 		}
 		client = rdc
 	})

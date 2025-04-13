@@ -109,7 +109,9 @@ func CheckMongoAlive(cfg config.Mongo) {
 			}
 		} else {
 			MongoAlive = true
-			log.Println("MongoDB Alive:", MongoAlive)
 		}
+
+		log.Println("MongoDB connection alive:", MongoAlive)
+
 	}
 }

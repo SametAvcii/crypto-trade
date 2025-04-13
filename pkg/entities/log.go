@@ -8,4 +8,5 @@ type Log struct {
 	Type    string `json:"type" example:"info"`  // -----> info, error
 	Proto   string `json:"proto" example:"http"` // -----> http, grpc
 	Ip      string `json:"ip" example:"127.0.0.1"`
+	Data    string `json:"data" example:"{}"`
 }

@@ -68,11 +68,11 @@ type Database struct {
 }
 
 type Mongo struct {
-	User     string
-	Pass     string
-	Host     string
-	Port     string
-	Database string
+	User     string `yaml:"user"`
+	Pass     string `yaml:"pass"`
+	Host     string `yaml:"host"`
+	Port     string `yaml:"port"`
+	Database string `yaml:"database"`
 }
 type Allows struct {
 	Methods []string `yaml:"methods"`

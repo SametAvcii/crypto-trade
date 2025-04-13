@@ -5,6 +5,7 @@ import (
 
 	"github.com/SametAvcii/crypto-trade/pkg/cache"
 	"github.com/SametAvcii/crypto-trade/pkg/config"
+	"github.com/SametAvcii/crypto-trade/pkg/consts"
 	"github.com/SametAvcii/crypto-trade/pkg/ctlog"
 	"github.com/SametAvcii/crypto-trade/pkg/database"
 	"github.com/SametAvcii/crypto-trade/pkg/entities"
@@ -25,16 +26,52 @@ func StartApp() {
 
 	events.InitKafka(config.Kafka)
 	go events.CheckKafkaAlive(config.Kafka)
-	
+
 	stream := events.NewStream(database.PgClient(), events.KafkaClientNew())
 
 	//running all streams
+	/*go func() {
+
+		exchanges := stream.GetExchanges()
+		for _, exchange := range exchanges {
+
+			err := stream.StartAllStreams(exchange.ID.String(), consts.AggTradeTopic)
+			if err != nil {
+				ctlog.CreateLog(&entities.Log{
+					Title:   "Stream Error For Exchange: " + exchange.Name,
+					Message: "Error starting stream: " + err.Error(),
+					Type:    "error",
+					Entity:  "exchange",
+				})
+				continue
+			}
+		}
+	}()*/
+
 	go func() {
 
 		exchanges := stream.GetExchanges()
 		for _, exchange := range exchanges {
 
-			err := stream.StartAllStreams(exchange.ID.String())
+			err := stream.StartAllStreams(exchange.ID.String(), consts.OrderBookTopic)
+			if err != nil {
+				ctlog.CreateLog(&entities.Log{
+					Title:   "Stream Error For Exchange: " + exchange.Name,
+					Message: "Error starting stream: " + err.Error(),
+					Type:    "error",
+					Entity:  "exchange",
+				})
+				continue
+			}
+		}
+	}()
+
+	go func() {
+
+		exchanges := stream.GetExchanges()
+		for _, exchange := range exchanges {
+
+			err := stream.StartAllStreams(exchange.ID.String(), consts.CandleStickTopic)
 			if err != nil {
 				ctlog.CreateLog(&entities.Log{
 					Title:   "Stream Error For Exchange: " + exchange.Name,
