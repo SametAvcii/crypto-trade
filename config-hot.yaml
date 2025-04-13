@@ -36,7 +36,7 @@ mongo:
   port: 27017
   user: crypto-trade-user
   pass: crypto-trade-pass
-  name: crypto-trade  
+  database: crypto-trade  
 
 allows:
   methods:

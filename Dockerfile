@@ -1,4 +1,4 @@
-FROM golang:1.23-alpine AS builder
+FROM golang:1.24-alpine as builder
 
 RUN apk add --no-cache upx
 RUN apk --no-cache add tzdata
