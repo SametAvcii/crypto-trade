@@ -76,10 +76,16 @@ func (d *MongoHandler) HandleMessage(msg *sarama.ConsumerMessage) {
 			Data:    string(msg.Value),
 		})
 		log.Printf("Error sending message to postgres-topic: %v", err)
-	} else {
-		//log.Printf("Message sent to postgres-topic at partition %d offset %d", partition, offset)
 	}
-	//log.Printf("MongoDB updated for id %s", mongoID)
+	ctlog.CreateLog(&entities.Log{
+		Title:   "Message sent to Kafka",
+		Message: "Message sent to Kafka successfully",
+		Type:    "success",
+		Entity:  "trade",
+		Data:    string(msg.Value),
+	})
+	log.Printf("Message sent to postgres-topic successfully: %s", pgTopic)
+
 }
 
 func insertMessageToMongo(msg *sarama.ConsumerMessage) (*mongo.InsertOneResult, error) {

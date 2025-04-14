@@ -156,6 +156,8 @@ func (s *Stream) startSymbolStream(wsURL, symbol, topic string) error {
 		if err != nil {
 			log.Printf("[%s] Kafka write error: %v", symbol, err)
 		}
+
+		log.Printf("[%s] Message sent to Kafka for %s", symbol, topic)
 	}
 
 	return nil

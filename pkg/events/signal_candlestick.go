@@ -48,7 +48,7 @@ func (s *SignalHandlerCandleStick) HandleMessage(msg *sarama.ConsumerMessage) {
 	var pgDb = database.PgClient()
 	var interval entities.SignalInterval
 
-	err := pgDb.Debug().Where("symbol = ? and interval = ?", strings.ToLower(payload.Symbol), payload.Kline.Interval).First(&interval).Error
+	err := pgDb.Where("symbol = ? and interval = ?", strings.ToLower(payload.Symbol), payload.Kline.Interval).First(&interval).Error
 	if err != nil {
 		ctlog.CreateLog(&entities.Log{
 			Title:   "Error fetching intervals from Postgres",

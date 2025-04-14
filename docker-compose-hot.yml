@@ -181,17 +181,24 @@ services:
     depends_on:
       - crypto-trade-db
 
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor
-    ports:
-      - "8089:8080"
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-    networks:
-      - crypto-trade
+  #cadvisor:
+  #  image: gcr.io/cadvisor/cadvisor
+  #  ports:
+  #    - "8089:8080"
+  #  volumes:
+  #    - /:/rootfs:ro
+  #    - /var/run:/var/run:ro
+  #    - /sys:/sys:ro
+  #    - /var/lib/docker/:/var/lib/docker:ro
+  #  networks:
+  #    - crypto-trade
+  #  command:
+  #    - "--disable_metrics=disk"
+  #    - "--disable_metrics=memory"
+  #  logging:
+  #    driver: "none" 
+  #  privileged: true  
+
 
 
 volumes:
