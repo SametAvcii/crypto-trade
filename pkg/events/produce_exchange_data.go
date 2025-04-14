@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/SametAvcii/crypto-trade/pkg/consts"
+	"github.com/SametAvcii/crypto-trade/pkg/ctlog"
 	"github.com/SametAvcii/crypto-trade/pkg/entities"
 	"github.com/gorilla/websocket"
 	"gorm.io/gorm"
@@ -27,6 +29,13 @@ func (s *Stream) GetExchanges() []entities.Exchange {
 	var exchanges []entities.Exchange
 	err := s.DB.Where("is_active = ?", entities.ExchangeActive).Find(&exchanges).Error
 	if err != nil {
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Error fetching exchanges from Postgres",
+			Message: fmt.Sprintf("Error fetching exchanges from Postgres: %v", err),
+			Type:    "error",
+			Entity:  "stream",
+			Data:    "Error fetching exchanges from Postgres",
+		})
 		return exchanges
 	}
 	return exchanges
@@ -36,6 +45,14 @@ func (s *Stream) GetStreamWS(exchangeID string) string {
 	var exchange entities.Exchange
 	err := s.DB.Where("id = ?", exchangeID).First(&exchange).Error
 	if err != nil {
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Error fetching exchange from Postgres",
+			Message: fmt.Sprintf("Error fetching exchange from Postgres for exchange ID %s: %v", exchangeID, err),
+			Type:    "error",
+			Entity:  "stream",
+			Data:    fmt.Sprintf("Exchange ID: %s", exchangeID),
+		})
+
 		return ""
 	}
 	return exchange.WsUrl
@@ -45,6 +62,14 @@ func (s *Stream) GetStreamSymbols(exchangeID string) ([]entities.Symbol, error) 
 	var symbols []entities.Symbol
 	err := s.DB.Where("exchange_id = ?", exchangeID).Find(&symbols).Error
 	if err != nil {
+
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Error fetching symbols from Postgres",
+			Message: fmt.Sprintf("Error fetching symbols from Postgres for exchange ID %s: %v", exchangeID, err),
+			Type:    "error",
+			Entity:  "stream",
+			Data:    fmt.Sprintf("Exchange ID: %s", exchangeID),
+		})
 		return nil, err
 	}
 	return symbols, nil
@@ -53,8 +78,16 @@ func (s *Stream) GetStreamSymbols(exchangeID string) ([]entities.Symbol, error) 
 func (s *Stream) GetSymbolIntervals(exchangeID, symbol string) ([]entities.SignalInterval, error) {
 
 	var intervals []entities.SignalInterval
-	err := s.DB.Debug().Where("exchange_id = ? AND symbol = ?", exchangeID, strings.ToLower(symbol)).Find(&intervals).Error
+	err := s.DB.Where("exchange_id = ? AND symbol = ?", exchangeID, strings.ToLower(symbol)).Find(&intervals).Error
 	if err != nil {
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Error fetching intervals from Postgres",
+			Message: fmt.Sprintf("Error fetching intervals from Postgres for symbol %s: %v", symbol, err),
+			Type:    "error",
+			Entity:  "stream",
+			Data:    fmt.Sprintf("Exchange ID: %s, Symbol: %s", exchangeID, symbol),
+		})
+
 		return intervals, err
 	}
 	return intervals, nil
@@ -63,11 +96,27 @@ func (s *Stream) GetSymbolIntervals(exchangeID, symbol string) ([]entities.Signa
 func (s *Stream) StartAllStreams(exchangeID, topic string) error {
 	wsBase := s.GetStreamWS(exchangeID)
 	if wsBase == "" {
+		ctlog.CreateLog(&entities.Log{
+			Title:   "WebSocket URL Not Found",
+			Message: fmt.Sprintf("WebSocket URL not found for exchange ID %s", exchangeID),
+			Type:    "error",
+			Entity:  "stream",
+			Data:    fmt.Sprintf("Exchange ID: %s", exchangeID),
+		})
+
 		return fmt.Errorf("WebSocket URL not found for exchange ID: %s", exchangeID)
 	}
 
 	symbols, err := s.GetStreamSymbols(exchangeID)
 	if err != nil {
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Get Stream Symbols Error",
+			Message: fmt.Sprintf("Error getting stream symbols for exchange ID %s: %v", exchangeID, err),
+			Type:    "error",
+			Entity:  "stream",
+			Data:    fmt.Sprintf("Exchange ID: %s", exchangeID),
+		})
+
 		return err
 	}
 
@@ -83,6 +132,13 @@ func (s *Stream) StartAllStreams(exchangeID, topic string) error {
 
 				err := s.startSymbolStream(wsURL, symbol.Symbol, topic)
 				if err != nil {
+					ctlog.CreateLog(&entities.Log{
+						Title:   "WebSocket Connection Error",
+						Message: fmt.Sprintf("WebSocket connection error for %s: %v", symbol.Symbol, err),
+						Type:    "error",
+						Entity:  "stream",
+						Data:    fmt.Sprintf("WebSocket URL: %s", wsURL),
+					})
 					log.Printf("Error in stream for %s: %v", symbol.Symbol, err)
 				}
 			}()
@@ -105,11 +161,27 @@ func (s *Stream) StartAllStreams(exchangeID, topic string) error {
 
 			intervals, err := s.GetSymbolIntervals(exchangeID, symbol.Symbol)
 			if err != nil {
+				ctlog.CreateLog(&entities.Log{
+					Title:   "Error fetching intervals from Postgres",
+					Message: fmt.Sprintf("Error fetching intervals from Postgres for symbol %s: %v", symbol.Symbol, err),
+					Type:    "error",
+					Entity:  "stream",
+					Data:    fmt.Sprintf("Symbol: %s", symbol.Symbol),
+				})
+
 				log.Printf("Error getting intervals for %s: %v", symbol.Symbol, err)
 				return err
 			}
 
 			if len(intervals) == 0 {
+				ctlog.CreateLog(&entities.Log{
+					Title:   "No intervals found",
+					Message: fmt.Sprintf("No intervals found for symbol %s", symbol.Symbol),
+					Type:    "error",
+					Entity:  "stream",
+					Data:    fmt.Sprintf("Symbol: %s", symbol.Symbol),
+				})
+
 				log.Printf("No intervals found for %s", symbol.Symbol)
 				return err
 			}
@@ -120,6 +192,14 @@ func (s *Stream) StartAllStreams(exchangeID, topic string) error {
 					log.Printf("Connecting to WS for interval: %s symbol: %s", fmt.Sprintf(consts.StreamCandleStick, interval.Interval), symbol.Symbol)
 					err := s.startSymbolStream(wsURL, symbol.Symbol, topic)
 					if err != nil {
+						ctlog.CreateLog(&entities.Log{
+							Title:   "WebSocket Connection Error",
+							Message: fmt.Sprintf("WebSocket connection error for %s: %v", symbol.Symbol, err),
+							Type:    "error",
+							Entity:  "stream",
+							Data:    fmt.Sprintf("WebSocket URL: %s", wsURL),
+						})
+
 						log.Printf("Error in stream for %s: %v", symbol.Symbol, err)
 					}
 
@@ -137,28 +217,56 @@ func (s *Stream) StartAllStreams(exchangeID, topic string) error {
 }
 
 func (s *Stream) startSymbolStream(wsURL, symbol, topic string) error {
-	c, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
-	if err != nil {
-		return fmt.Errorf("WebSocket dial failed for %s: %v", symbol, err)
-	}
-	defer c.Close()
+	maxRetries := consts.MaxRetries
+	retryDelay := consts.RetryDelay * time.Second
 
-	for {
-		_, message, err := c.ReadMessage()
+	var lastErr error
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		c, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 		if err != nil {
-			log.Printf("[%s] Read error: %v", symbol, err)
-			break
-		}
-		//log.Printf("[%s] Received message for %s", symbol, topic)
+			lastErr = fmt.Errorf("WebSocket dial failed for %s (attempt %d/%d): %v", symbol, attempt+1, maxRetries, err)
+			ctlog.CreateLog(&entities.Log{
+				Title:   "WebSocket Connection Error",
+				Message: lastErr.Error(),
+				Type:    "error",
+				Entity:  "stream",
+				Data:    fmt.Sprintf("WebSocket URL: %s", wsURL),
+			})
 
-		//log.Println("topic", topic)
-		_, _, err = s.Kafka.Produce(topic, symbol, []byte(message))
-		if err != nil {
-			log.Printf("[%s] Kafka write error: %v", symbol, err)
+			log.Println(lastErr.Error())
+			time.Sleep(retryDelay)
+			continue
 		}
 
-		log.Printf("[%s] Message sent to Kafka for %s", symbol, topic)
+		// Successfully connected, start reading messages
+		log.Printf("[%s] WebSocket connected, starting to read messages", symbol)
+		defer c.Close()
+
+		for {
+			_, message, err := c.ReadMessage()
+			if err != nil {
+				ctlog.CreateLog(&entities.Log{
+					Title:   "WebSocket Read Error",
+					Message: fmt.Sprintf("WebSocket read error for %s: %v", symbol, err),
+					Type:    "error",
+					Entity:  "stream",
+					Data:    fmt.Sprintf("WebSocket URL: %s", wsURL),
+				})
+
+				log.Printf("[%s] WebSocket read error: %v", symbol, err)
+				break
+			}
+
+			_, _, err = s.Kafka.Produce(topic, symbol, []byte(message))
+			if err != nil {
+				log.Printf("[%s] Kafka write error: %v", symbol, err)
+			}
+
+			log.Printf("[%s] Message sent to Kafka for %s", symbol, topic)
+		}
+
+		return nil
 	}
 
-	return nil
+	return lastErr
 }

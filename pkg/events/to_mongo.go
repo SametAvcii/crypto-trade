@@ -20,7 +20,6 @@ import (
 type MongoHandler struct{}
 
 func (d *MongoHandler) HandleMessage(msg *sarama.ConsumerMessage) {
-	//log.Printf("[Mongo] Processing: %s", msg.Topic)
 	mongoData, err := insertMessageToMongo(msg)
 	if err != nil {
 		ctlog.CreateLog(&entities.Log{

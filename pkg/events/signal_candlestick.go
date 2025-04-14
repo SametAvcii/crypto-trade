@@ -39,8 +39,6 @@ func (s *SignalHandlerCandleStick) HandleMessage(msg *sarama.ConsumerMessage) {
 
 	// Check if the candlestick is closed
 	if payload.Kline.IsKlineClosed == false {
-		//TODO: Add a log entry for this case
-		//TODO: Maybe save the opened candlestick data to postgres
 		log.Println("Candlestick is not closed, skipping...")
 		return
 	}
@@ -59,6 +57,7 @@ func (s *SignalHandlerCandleStick) HandleMessage(msg *sarama.ConsumerMessage) {
 		})
 		return
 	}
+
 	log.Println("Interval find for:", interval.Interval)
 
 	key50 := fmt.Sprintf("%s:%s:ma50", payload.Symbol, interval.Interval)
@@ -73,9 +72,6 @@ func (s *SignalHandlerCandleStick) HandleMessage(msg *sarama.ConsumerMessage) {
 			pipe.Del(context.Background(), key200)
 		}
 
-		// Fetch the last 200 candlesticks from the database
-		// and push them to Redis
-
 		var candleSticks []entities.Candlestick
 		err = pgDb.Where("symbol = ? and interval = ?", payload.Symbol, payload.Kline.Interval).
 			Order("open_time desc").Limit(200).Find(&candleSticks).Error
@@ -89,10 +85,15 @@ func (s *SignalHandlerCandleStick) HandleMessage(msg *sarama.ConsumerMessage) {
 				Data:    string(msg.Value),
 			})
 
-			// If there are no candlesticks in the database, fetch them from the API
 			candleSticks, err = candlestick.GetCandleSticksAndUpdate(interval.ExchangeID.String(), payload.Symbol, interval.Interval, 200)
 			if err != nil {
-				log.Println("Error getting candlesticks:", err)
+				ctlog.CreateLog(&entities.Log{
+					Title:   "Error fetching candlesticks from API",
+					Message: "Error fetching candlesticks from API: " + err.Error(),
+					Type:    "error",
+					Entity:  "candlestick",
+					Data:    string(msg.Value),
+				})
 				return
 			}
 
@@ -117,12 +118,24 @@ func (s *SignalHandlerCandleStick) HandleMessage(msg *sarama.ConsumerMessage) {
 
 	_, err = pipe.Exec(context.Background())
 	if err != nil {
-		log.Println("Redis pipeline error:", err)
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Error executing Redis pipeline",
+			Message: "Error executing Redis pipeline: " + err.Error(),
+			Type:    "error",
+			Entity:  "candlestick",
+			Data:    string(msg.Value),
+		})
 	}
 
 	signal, err := checkForSignal(rdb, payload.Symbol, interval.Interval)
 	if err != nil {
-		log.Println("Signal check error:", err)
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Error checking for signal",
+			Message: "Error checking for signal: " + err.Error(),
+			Type:    "error",
+			Entity:  "signal",
+			Data:    string(msg.Value),
+		})
 		return
 	}
 	log.Printf("[%s][%s] Signal: %s", payload.Symbol, interval.Interval, signal)
@@ -141,6 +154,13 @@ func checkForSignal(rdb *redis.Client, symbol, timeframe string) (dtos.MaData, e
 
 	_, err := pipe.Exec(context.Background())
 	if err != nil {
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Error executing Redis pipeline",
+			Message: "Error executing Redis pipeline: " + err.Error(),
+			Type:    "error",
+			Entity:  "signal",
+			Data:    fmt.Sprintf("Symbol: %s, Timeframe: %s", symbol, timeframe),
+		})
 		return res, fmt.Errorf("Redis read error: %v", err)
 	}
 
@@ -206,9 +226,7 @@ func checkForSignal(rdb *redis.Client, symbol, timeframe string) (dtos.MaData, e
 			Entity:  "signal",
 			Data:    fmt.Sprintf("Symbol: %s, Signal: %s", signal.Symbol, signal.Signal),
 		})
-
 		log.Printf("Error inserting signal into Postgres: %v", err)
-
 	}
 
 	//add to mongo signal data

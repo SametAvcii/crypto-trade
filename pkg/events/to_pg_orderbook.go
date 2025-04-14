@@ -27,6 +27,13 @@ func (d *PgOrderBookHandler) HandleMessage(msg *sarama.ConsumerMessage) {
 	log.Printf("Received message from topic %s", msg.Topic)
 	var payload dtos.OrderBook
 	if err := json.Unmarshal(msg.Value, &payload); err != nil {
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Error unmarshalling message for Postgres",
+			Message: "Error unmarshalling message into BSON: " + err.Error(),
+			Type:    "error",
+			Entity:  "order-book",
+			Data:    string(msg.Value),
+		})
 		log.Printf("Error unmarshalling message for Postgres: %v", err)
 	}
 
@@ -56,9 +63,28 @@ func UpdateOrderBookData(symbol string, bids, asks [][]string) error {
 	oldBids, _ := rdb.HGetAll(ctx, bidKey).Result()
 	oldAsks, _ := rdb.HGetAll(ctx, askKey).Result()
 
-	compareAndUpdate("bid", oldBids, bids, symbol)
-	compareAndUpdate("ask", oldAsks, asks, symbol)
+	err := compareAndUpdate("bid", oldBids, bids, symbol)
+	if err != nil {
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Error comparing and updating bids",
+			Message: fmt.Sprintf("Error comparing and updating bids for symbol %s: %v", symbol, err),
+			Type:    "error",
+			Entity:  "order-book",
+			Data:    fmt.Sprintf("Symbol: %s, Bids: %v", symbol, bids),
+		})
+	}
 
+	err = compareAndUpdate("ask", oldAsks, asks, symbol)
+	if err != nil {
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Error comparing and updating asks",
+			Message: fmt.Sprintf("Error comparing and updating asks for symbol %s: %v", symbol, err),
+			Type:    "error",
+			Entity:  "order-book",
+			Data:    fmt.Sprintf("Symbol: %s, Asks: %v", symbol, asks),
+		})
+	}
+	
 	newBidMap := make(map[string]string)
 	for _, bid := range bids {
 		newBidMap[bid[0]] = bid[1]
@@ -74,7 +100,7 @@ func UpdateOrderBookData(symbol string, bids, asks [][]string) error {
 	return nil
 }
 
-func compareAndUpdate(side string, oldData map[string]string, newData [][]string, symbol string) {
+func compareAndUpdate(side string, oldData map[string]string, newData [][]string, symbol string) error {
 	newMap := make(map[string]string)
 	for _, entry := range newData {
 		newMap[entry[0]] = entry[1]
@@ -83,26 +109,50 @@ func compareAndUpdate(side string, oldData map[string]string, newData [][]string
 	for price := range oldData {
 		newAmount, exists := newMap[price]
 		if !exists || newAmount == "0.00000000" {
-			UpdateStatusInDB(symbol, price, side, consts.ClosedOrder)
+			err := UpdateStatusInDB(symbol, price, side, consts.ClosedOrder)
+			if err != nil {
+				ctlog.CreateLog(&entities.Log{
+					Title:   "Error updating status in DB",
+					Message: fmt.Sprintf("Error updating status in DB for price %s: %v", price, err),
+					Type:    "error",
+					Entity:  "order-book",
+					Data:    fmt.Sprintf("Price: %s, Side: %s", price, side),
+				})
+				return err
+			}
 		}
 	}
 
 	for _, entry := range newData {
 		price, amount := entry[0], entry[1]
 		if amount != "0.00000000" {
-			UpsertToDB(symbol, price, amount, side, consts.ActiveOrder)
+			err := UpsertToDB(symbol, price, amount, side, consts.ActiveOrder)
+			if err != nil {
+				ctlog.CreateLog(&entities.Log{
+					Title:   "Error upserting to DB",
+					Message: fmt.Sprintf("Error upserting to DB for price %s: %v", price, err),
+					Type:    "error",
+					Entity:  "order-book",
+					Data:    fmt.Sprintf("Price: %s, Side: %s", price, side),
+				})
+				return err
+			}
 		}
 	}
+	return nil
 }
-func UpdateStatusInDB(symbol, price, side, status string) {
+
+func UpdateStatusInDB(symbol, price, side, status string) error {
 	// PostgreSQL update
 	db := database.PgClient()
-	db.Model(&entities.OrderBook{}).
-		Where("symbol = ? AND price = ? AND side = ?", symbol, price, side).
+	err := db.Model(&entities.OrderBook{}).Where("symbol = ? AND price = ? AND side = ?", symbol, price, side).
 		Updates(map[string]interface{}{
 			"status":     status,
 			"updated_at": time.Now(),
-		})
+		}).Error
+	if err != nil {
+		return err
+	}
 
 	// MongoDB update
 	mongo := database.MongoClient()
@@ -114,13 +164,14 @@ func UpdateStatusInDB(symbol, price, side, status string) {
 			"updated_at": time.Now(),
 		},
 	}
-	_, err := collection.UpdateOne(context.Background(), filter, update)
+	_, err = collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		log.Printf("Error updating MongoDB status: %v", err)
+		return err
 	}
+	return nil
 }
 
-func UpsertToDB(symbol, price, amount, side, status string) {
+func UpsertToDB(symbol, price, amount, side, status string) error {
 	db := database.PgClient()
 	var existing entities.OrderBook
 	err := db.Where("symbol = ? AND price = ? AND side = ?", symbol, price, side).First(&existing).Error
@@ -134,14 +185,20 @@ func UpsertToDB(symbol, price, amount, side, status string) {
 				Side:   side,
 				Status: status,
 			}
-			db.Create(&newOrder)
+			err = db.Create(&newOrder).Error
+			if err != nil {
+				return err
+			}
 		} else {
-			log.Printf("Error querying PG order: %v", err)
+			return err
 		}
 	} else {
 		existing.Amount = amount
 		existing.Status = status
-		db.Save(&existing)
+		err = db.Save(&existing).Error
+		if err != nil {
+			return err
+		}
 	}
 
 	// MongoDB upsert
@@ -161,6 +218,7 @@ func UpsertToDB(symbol, price, amount, side, status string) {
 	opts := options.Update().SetUpsert(true)
 	_, err = collection.UpdateOne(context.Background(), filter, update, opts)
 	if err != nil {
-		log.Printf("Error upserting to MongoDB: %v", err)
+		return err
 	}
+	return nil
 }

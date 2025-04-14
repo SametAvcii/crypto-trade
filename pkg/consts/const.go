@@ -22,3 +22,8 @@ const (
 const (
 	Binance = "binance"
 )
+
+const (
+	MaxRetries = 5
+	RetryDelay = 5
+)
