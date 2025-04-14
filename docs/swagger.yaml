@@ -1,18 +1,326 @@
 basePath: /api/v1
-host: localhost:8000
+definitions:
+  gin.H:
+    additionalProperties: {}
+    type: object
+  github_com_SametAvcii_crypto-trade_pkg_dtos.AddExchangeReq:
+    properties:
+      name:
+        description: Binance
+        type: string
+      ws_url:
+        description: wss://ws-api.binance.com:443/ws-api/v3
+        type: string
+    type: object
+  github_com_SametAvcii_crypto-trade_pkg_dtos.AddExchangeRes:
+    properties:
+      id:
+        description: "1"
+        type: string
+      name:
+        description: Binance
+        type: string
+      ws_url:
+        description: wss://ws-api.binance.com:443/ws-api/v3
+        type: string
+    type: object
+  github_com_SametAvcii_crypto-trade_pkg_dtos.AddSignalIntervalReq:
+    properties:
+      exchange_id:
+        description: "1"
+        type: string
+      interval:
+        description: 1m, 5m, 15m, 1h, 4h, 1d
+        type: string
+      symbol:
+        description: BTCUSDT
+        type: string
+    type: object
+  github_com_SametAvcii_crypto-trade_pkg_dtos.AddSymbolReq:
+    properties:
+      exchange_id:
+        type: string
+      symbol:
+        description: BTCUSDT
+        type: string
+    type: object
+  github_com_SametAvcii_crypto-trade_pkg_dtos.GetSymbolRes:
+    properties:
+      exchange_id:
+        type: string
+      id:
+        type: string
+      is_active:
+        description: 1 active, 2 passive
+        type: integer
+      symbol:
+        type: string
+    type: object
+  github_com_SametAvcii_crypto-trade_pkg_dtos.UpdateExchangeReq:
+    properties:
+      id:
+        type: string
+      name:
+        description: Binance
+        type: string
+      ws_url:
+        description: wss://ws-api.binance.com:443/ws-api/v3
+        type: string
+    type: object
+  github_com_SametAvcii_crypto-trade_pkg_dtos.UpdateExchangeRes:
+    properties:
+      id:
+        type: string
+      name:
+        description: Binance
+        type: string
+      ws_url:
+        description: wss://ws-api.binance.com:443/ws-api/v3
+        type: string
+    type: object
+  github_com_SametAvcii_crypto-trade_pkg_dtos.UpdateSignalIntervalReq:
+    properties:
+      exchange_id:
+        description: "1"
+        type: string
+      id:
+        description: "1"
+        type: string
+      interval:
+        description: 1m, 5m, 15m, 1h, 4h, 1d
+        type: string
+      symbol:
+        description: BTCUSDT
+        type: string
+    type: object
+  github_com_SametAvcii_crypto-trade_pkg_dtos.UpdateSymbolReq:
+    properties:
+      exchange_id:
+        type: string
+      id:
+        type: string
+      symbol:
+        type: string
+    type: object
+host: localhost:8001
 info:
   contact: {}
-  description: xxx API Documentation
-  title: xxx API
+  description: Crypto Trade API Documentation
+  title: Crypto Trade API
   version: "1.0"
 paths:
-  /x:
+  /:
+    post:
+      consumes:
+      - application/json
+      description: Add Symbol Route
+      parameters:
+      - description: Add Symbol Request
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.AddSymbolReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add Symbol
+      tags:
+      - Symbol Endpoints
+  /exchanges:
     get:
       consumes:
       - application/json
-      description: lorem ipsum dolor sit amet
+      description: Retrieves all exchanges
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get all exchanges
+      tags:
+      - exchanges
+    post:
+      consumes:
+      - application/json
+      description: Add a new exchange
       parameters:
-      - description: Group ID
+      - description: Exchange information
+        in: body
+        name: exchange
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.AddExchangeReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created exchange
+          schema:
+            $ref: '#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.AddExchangeRes'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Add exchange
+      tags:
+      - exchanges
+  /exchanges/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an exchange by its ID
+      parameters:
+      - description: Exchange ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Delete an exchange
+      tags:
+      - exchanges
+    get:
+      consumes:
+      - application/json
+      description: Retrieves an exchange by its ID
+      parameters:
+      - description: Exchange ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get exchange by ID
+      tags:
+      - exchanges
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing exchange with the provided information
+      parameters:
+      - description: Exchange ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Exchange update information
+        in: body
+        name: exchange
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.UpdateExchangeReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated exchange
+          schema:
+            $ref: '#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.UpdateExchangeRes'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Update an exchange
+      tags:
+      - exchanges
+  /signal/interval:
+    get:
+      consumes:
+      - application/json
+      description: Get All Signal Intervals Route
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get All Signal Intervals
+      tags:
+      - Signal Endpoints
+    post:
+      consumes:
+      - application/json
+      description: Add Signal Interval Route
+      parameters:
+      - description: Add Symbol Request
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.AddSignalIntervalReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add Signal Interval
+      tags:
+      - Signal Endpoints
+  /signal/interval/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Signal Interval Route
+      parameters:
+      - description: Signal ID
         in: path
         name: id
         required: true
@@ -32,9 +340,185 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: summary for x
+      summary: Delete Signal Interval
       tags:
-      - X Endpoints
+      - Signal Endpoints
+    get:
+      consumes:
+      - application/json
+      description: Get Signal Interval by ID Route
+      parameters:
+      - description: Signal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Signal Interval by ID
+      tags:
+      - Signal Endpoints
+    put:
+      consumes:
+      - application/json
+      description: Update Signal Interval Route
+      parameters:
+      - description: Signal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update Signal Request
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.UpdateSignalIntervalReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update Signal Interval
+      tags:
+      - Signal Endpoints
+  /symbol:
+    get:
+      consumes:
+      - application/json
+      description: Get All Symbols Route
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.GetSymbolRes'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get All Symbols
+      tags:
+      - Symbol Endpoints
+  /symbol/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Symbol Route
+      parameters:
+      - description: Symbol ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete Symbol
+      tags:
+      - Symbol Endpoints
+    get:
+      consumes:
+      - application/json
+      description: Get Symbol by ID Route
+      parameters:
+      - description: Symbol ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.GetSymbolRes'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Symbol by ID
+      tags:
+      - Symbol Endpoints
+    put:
+      consumes:
+      - application/json
+      description: Update Symbol Route
+      parameters:
+      - description: Symbol ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update Symbol Request
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.UpdateSymbolReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update Symbol
+      tags:
+      - Symbol Endpoints
 schemes:
 - http
 - https
