@@ -34,7 +34,7 @@ func (d *MongoHandler) HandleMessage(msg *sarama.ConsumerMessage) {
 		return
 	}
 	mongoID := mongoData.InsertedID.(primitive.ObjectID).Hex()
-	aggTradeMongo := dtos.AggTradeMongo{
+	aggTradeMongo := dtos.MongoData{
 		MongoID: mongoID,
 		Value:   string(msg.Value),
 	}

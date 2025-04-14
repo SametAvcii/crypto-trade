@@ -11,7 +11,7 @@ type AggTrade struct {
 	IsBuyerMaker bool   `json:"m"`
 }
 
-type AggTradeMongo struct {
+type MongoData struct {
 	MongoID string `json:"id"`
 	Value   string `json:"value"`
 }

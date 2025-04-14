@@ -109,6 +109,13 @@ func UpdateSymbol(s symbol.Service) func(c *gin.Context) {
 			return
 		}
 
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Update Symbol",
+			Message: "Update symbol success: " + res.Symbol,
+			Entity:  "symbol",
+			Type:    "success",
+		})
+
 		c.JSON(200, gin.H{
 			"data":   res,
 			"status": 200,
@@ -144,6 +151,13 @@ func DeleteSymbol(s symbol.Service) func(c *gin.Context) {
 			return
 		}
 
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Delete Symbol",
+			Message: "Delete symbol success",
+			Entity:  "symbol",
+			Type:    "success",
+		})
+
 		c.JSON(200, gin.H{
 			"message": "Symbol deleted successfully",
 			"status":  200,
@@ -164,12 +178,26 @@ func GetAllSymbols(s symbol.Service) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		symbols, err := s.GetAllSymbols(c)
 		if err != nil {
+
+			ctlog.CreateLog(&entities.Log{
+				Title:   "Get All Symbols Error",
+				Message: "Get all symbols err: " + err.Error(),
+				Entity:  "symbol",
+				Type:    "error",
+			})
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 				"error":  err.Error(),
 				"status": http.StatusBadRequest,
 			})
 			return
 		}
+
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Get All Symbols",
+			Message: "Get all symbols success",
+			Entity:  "symbol",
+			Type:    "success",
+		})
 
 		c.JSON(200, gin.H{
 			"data":   symbols,
@@ -193,12 +221,27 @@ func GetSymbolByID(s symbol.Service) func(c *gin.Context) {
 		id := c.Param("id")
 		symbol, err := s.GetSymbol(c, id)
 		if err != nil {
+
+			ctlog.CreateLog(&entities.Log{
+				Title:   "Get Symbol Error",
+				Message: "Get symbol err: " + err.Error(),
+				Entity:  "symbol",
+				Type:    "error",
+			})
+
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 				"error":  err.Error(),
 				"status": http.StatusBadRequest,
 			})
 			return
 		}
+
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Get Symbol",
+			Message: "Get symbol success: " + symbol.Symbol,
+			Entity:  "symbol",
+			Type:    "success",
+		})
 
 		c.JSON(200, gin.H{
 			"data":   symbol,

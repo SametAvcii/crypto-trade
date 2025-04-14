@@ -15,6 +15,8 @@ import (
 	"github.com/SametAvcii/crypto-trade/pkg/database"
 	"github.com/SametAvcii/crypto-trade/pkg/dtos"
 	"github.com/SametAvcii/crypto-trade/pkg/entities"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"gorm.io/gorm"
 )
 
@@ -91,8 +93,8 @@ func compareAndUpdate(side string, oldData map[string]string, newData [][]string
 		}
 	}
 }
-
 func UpdateStatusInDB(symbol, price, side, status string) {
+	// PostgreSQL update
 	db := database.PgClient()
 	db.Model(&entities.OrderBook{}).
 		Where("symbol = ? AND price = ? AND side = ?", symbol, price, side).
@@ -101,17 +103,29 @@ func UpdateStatusInDB(symbol, price, side, status string) {
 			"updated_at": time.Now(),
 		})
 
+	// MongoDB update
+	mongo := database.MongoClient()
+	collection := mongo.Database("crypto").Collection("orderbook")
+	filter := bson.M{"symbol": symbol, "price": price, "side": side}
+	update := bson.M{
+		"$set": bson.M{
+			"status":     status,
+			"updated_at": time.Now(),
+		},
+	}
+	_, err := collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		log.Printf("Error updating MongoDB status: %v", err)
+	}
 }
 
 func UpsertToDB(symbol, price, amount, side, status string) {
-
 	db := database.PgClient()
 	var existing entities.OrderBook
 	err := db.Where("symbol = ? AND price = ? AND side = ?", symbol, price, side).First(&existing).Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// Kayıt bulunamadı, yeni kayıt oluştur
 			newOrder := entities.OrderBook{
 				Symbol: symbol,
 				Price:  price,
@@ -121,13 +135,31 @@ func UpsertToDB(symbol, price, amount, side, status string) {
 			}
 			db.Create(&newOrder)
 		} else {
-			// Başka bir hata varsa logla veya yönet
-			log.Printf("Error querying order: %v", err)
+			log.Printf("Error querying PG order: %v", err)
 		}
 	} else {
-		// Kayıt bulundu, güncelle
 		existing.Amount = amount
 		existing.Status = status
 		db.Save(&existing)
+	}
+
+	// MongoDB upsert
+	mongo := database.MongoClient()
+	collection := mongo.Database("crypto").Collection("orderbook")
+	filter := bson.M{"symbol": symbol, "price": price, "side": side}
+	update := bson.M{
+		"$set": bson.M{
+			"symbol":    symbol,
+			"price":     price,
+			"amount":    amount,
+			"side":      side,
+			"status":    status,
+			"updatedAt": time.Now(),
+		},
+	}
+	opts := options.Update().SetUpsert(true)
+	_, err = collection.UpdateOne(context.Background(), filter, update, opts)
+	if err != nil {
+		log.Printf("Error upserting to MongoDB: %v", err)
 	}
 }

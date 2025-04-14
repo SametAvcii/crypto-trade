@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"fmt"
 	"net/http"
 
 	ctlog "github.com/SametAvcii/crypto-trade/pkg/ctlog"
@@ -31,7 +30,6 @@ func ExchangeRoutes(r *gin.RouterGroup, s exchange.Service) {
 // @Router /exchanges [post]
 func AddExchange(s exchange.Service) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		fmt.Println("Add Exchange")
 		var req dtos.AddExchangeReq
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.AbortWithStatusJSON(400, gin.H{
@@ -46,7 +44,7 @@ func AddExchange(s exchange.Service) func(c *gin.Context) {
 			ctlog.CreateLog(&entities.Log{
 				Title:   "Add Exchange Error",
 				Message: "Add Exchange err: " + err.Error(),
-				Entity:  "symbol",
+				Entity:  "exchange",
 				Type:    "error",
 			})
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -59,7 +57,7 @@ func AddExchange(s exchange.Service) func(c *gin.Context) {
 		ctlog.CreateLog(&entities.Log{
 			Title:   "Add Exchange",
 			Message: "Add exchange success: " + res.Name,
-			Entity:  "symbol",
+			Entity:  "exchange",
 			Type:    "success",
 		})
 

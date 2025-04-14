@@ -45,7 +45,7 @@ func AddSignalInterval(s signal.Service) func(c *gin.Context) {
 			ctlog.CreateLog(&entities.Log{
 				Title:   "Add Signal Interval Error",
 				Message: "Add Signal Interval err: " + err.Error(),
-				Entity:  "symbol",
+				Entity:  "signal",
 				Type:    "error",
 			})
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -58,7 +58,7 @@ func AddSignalInterval(s signal.Service) func(c *gin.Context) {
 		ctlog.CreateLog(&entities.Log{
 			Title:   "Add Signal Interval",
 			Message: "Add Signal Interval success: " + res.Symbol,
-			Entity:  "symbol",
+			Entity:  "signal",
 			Type:    "success",
 		})
 
@@ -162,9 +162,23 @@ func GetSignalIntervalByID(s signal.Service) func(c *gin.Context) {
 		id := c.Param("id")
 		res, err := s.GetSignalIntervalById(c, id)
 		if err != nil {
+			ctlog.CreateLog(&entities.Log{
+				Title:   "Get Signal Interval Error",
+				Message: "Get Signal Interval err: " + err.Error(),
+				Entity:  "signal",
+				Type:    "error",
+			})
+
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error(), "status": http.StatusBadRequest})
 			return
 		}
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Get Signal Interval",
+			Message: "Get Signal Interval success: " + res.Symbol,
+			Entity:  "signal",
+			Type:    "success",
+		})
+
 		c.JSON(200, gin.H{"data": res, "status": 200})
 	}
 }
@@ -182,9 +196,24 @@ func GetAllSignalIntervals(s signal.Service) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		res, err := s.GetAllSignalIntervals(c)
 		if err != nil {
+			ctlog.CreateLog(&entities.Log{
+				Title:   "Get All Signal Intervals Error",
+				Message: "Get All Signal Intervals err: " + err.Error(),
+				Entity:  "signal",
+				Type:    "error",
+			})
+
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error(), "status": http.StatusBadRequest})
 			return
 		}
+
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Get All Signal Intervals",
+			Message: "Get All Signal Intervals success",
+			Entity:  "signal",
+			Type:    "success",
+		})
+
 		c.JSON(200, gin.H{"data": res, "status": 200})
 	}
 }

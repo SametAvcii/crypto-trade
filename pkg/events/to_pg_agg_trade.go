@@ -17,7 +17,7 @@ func (d *PgAggTradeHandler) HandleMessage(msg *sarama.ConsumerMessage) {
 	log.Println("Starting Kafka consumer...", msg.Topic)
 
 	var (
-		payload     dtos.AggTradeMongo
+		payload     dtos.MongoData
 		symbolPrice entities.SymbolPrice
 		aggTrade    dtos.AggTrade
 	)

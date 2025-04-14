@@ -49,11 +49,12 @@ func TestAddExchange(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	req := dtos.AddExchangeReq{
-		Name: "Test Exchange",
+		Name:  "Test Exchange",
+		WsUrl: "ws://test.com",
 	}
 	res := dtos.AddExchangeRes{
-		ID:   "1",
-		Name: "Test Exchange",
+		Name:  "Test Exchange",
+		WsUrl: "ws://test.com",
 	}
 
 	mockService.On("AddExchange", mock.Anything, req).Return(res, nil)

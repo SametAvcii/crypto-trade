@@ -17,7 +17,7 @@ func TestPgAggTradeHandler_HandleMessage(t *testing.T) {
 		{
 			name: "valid message",
 			message: &sarama.ConsumerMessage{
-				Value: mustMarshal(dtos.AggTradeMongo{
+				Value: mustMarshal(dtos.MongoData{
 					MongoID: "123",
 					Value: string(mustMarshal(dtos.AggTrade{
 						Symbol: "BTCUSDT",
