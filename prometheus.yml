@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 10s  
+
+scrape_configs:
+  - job_name: 'crypto-trade'
+    static_configs:
+      - targets: ['crypto-trade:8001']
+
+  - job_name: 'crypto-trade-consumer'
+    static_configs:
+      - targets: ['crypto-trade-consumer:8002']
+
+
+
+  - job_name: 'crypto-trade-db'
+    static_configs:
+      - targets: ['crypto-trade-postgres-exporter:9187']
+
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    

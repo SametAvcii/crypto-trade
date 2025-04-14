@@ -87,4 +87,5 @@ func StartApp() {
 	log.Println("All streams started successfully.")
 
 	server.LaunchHttpServer(config.App, config.Allows)
+
 }

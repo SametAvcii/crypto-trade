@@ -9,7 +9,30 @@ import (
 	"github.com/SametAvcii/crypto-trade/pkg/database"
 	"github.com/SametAvcii/crypto-trade/pkg/events"
 	"github.com/SametAvcii/crypto-trade/pkg/server"
+	"github.com/prometheus/client_golang/prometheus"
 )
+
+var (
+	consumerSuccessCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "consumer_success_count",
+			Help: "Total number of successful Kafka consumer messages",
+		},
+		[]string{"consumer", "topic"},
+	)
+	consumerFailureCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "consumer_failure_count",
+			Help: "Total number of failed Kafka consumer messages",
+		},
+		[]string{"consumer", "topic"},
+	)
+)
+
+func init() {
+	prometheus.MustRegister(consumerSuccessCounter)
+	prometheus.MustRegister(consumerFailureCounter)
+}
 
 func StartConsumer() {
 	config := config.InitConfig()
@@ -25,29 +48,6 @@ func StartConsumer() {
 	events.InitKafka(config.Kafka)
 	go events.CheckKafkaAlive(config.Kafka)
 
-	//stream := events.NewStream(database.PgClient(), events.KafkaClientNew())
-
-	/*	signalConsumerAggTrade := events.Consumer{
-			Brokers: config.Kafka.Brokers,
-			GroupID: consts.DbOrderBookGroup,
-			Topic:   consts.AggTradeTopic,
-			Handler: &events.SignalHandlerAggTrade{},
-		}
-
-		dbConsumerAggTrade := events.Consumer{
-			Brokers: config.Kafka.Brokers,
-			GroupID: consts.DbAggTradeGroup,
-			Topic:   consts.AggTradeTopic,
-			Handler: &events.MongoHandler{},
-		}*/
-
-	/*signalConsumerOrderBook := events.Consumer{
-		Brokers: config.Kafka.Brokers,
-		GroupID: consts.SignalOrderBookGroup,
-		Topic:   consts.OrderBookTopic,
-		Handler: &events.SignalHandlerOrderBook{},
-	}*/
-
 	mongoDbConsumerOrderBook := events.Consumer{
 		Brokers: config.Kafka.Brokers,
 		GroupID: consts.DbOrderBookGroup,
@@ -61,6 +61,7 @@ func StartConsumer() {
 		Topic:   consts.OrderBookTopic,
 		Handler: &events.PgOrderBookHandler{},
 	}
+
 	signalCandlesticks := events.Consumer{
 		Brokers: config.Kafka.Brokers,
 		GroupID: consts.SignalCandleStickGroup,
@@ -72,10 +73,15 @@ func StartConsumer() {
 
 	//dbConsumerAggTrade.Start()
 	//signalConsumerAggTrade.Start()
-	mongoDbConsumerOrderBook.Start()
-	dbConsumerOrderBook.Start()
+	go mongoDbConsumerOrderBook.Start()
+	go dbConsumerOrderBook.Start()
 	//signalConsumerOrderBook.Start()
-	signalCandlesticks.Start()
+	go signalCandlesticks.Start()
+
+	go func() {
+		consumerSuccessCounter.WithLabelValues("mongoDbConsumerOrderBook", consts.OrderBookTopic).Inc()
+		consumerFailureCounter.WithLabelValues("mongoDbConsumerOrderBook", consts.OrderBookTopic).Inc()
+	}()
 
 	log.Println("All consumers started successfully.")
 

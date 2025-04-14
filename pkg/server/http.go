@@ -15,6 +15,8 @@ import (
 	"github.com/SametAvcii/crypto-trade/pkg/domains/exchange"
 	"github.com/SametAvcii/crypto-trade/pkg/domains/signal"
 	"github.com/SametAvcii/crypto-trade/pkg/domains/symbol"
+	"github.com/SametAvcii/crypto-trade/pkg/metrics"
+	"github.com/SametAvcii/crypto-trade/pkg/middleware"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -28,11 +30,17 @@ var (
 	swaggerPass string
 )
 
+func init() {
+	metrics.Register()
+}
+
 func LaunchHttpServer(appc config.App, allows config.Allows) {
 	log.Println("Starting HTTP Server...")
 	gin.SetMode(gin.ReleaseMode)
 
 	app := gin.New()
+	app.Use(middleware.PrometheusMiddleware())
+
 	app.Use(gin.LoggerWithFormatter(func(log gin.LogFormatterParams) string {
 		return fmt.Sprintf("[%s] - %s \"%s %s %s %d %s\"\n",
 			log.TimeStamp.Format("2006-01-02 15:04:05"),
@@ -46,9 +54,7 @@ func LaunchHttpServer(appc config.App, allows config.Allows) {
 	}))
 	app.Use(gin.Recovery())
 	app.Use(otelgin.Middleware(appc.Name))
-	//app.Use(middleware.ClaimIp())
 
-	//app.Use(middleware.Secure())
 	app.Use(cors.New(cors.Config{
 		AllowMethods:     allows.Methods,
 		AllowHeaders:     allows.Headers,
@@ -68,9 +74,7 @@ func LaunchHttpServer(appc config.App, allows config.Allows) {
 	pgDB := database.PgClient()
 
 	api := app.Group("/api/v1")
-
 	symbolRoute := api.Group("/symbol")
-
 	symbolRepo := symbol.NewRepo(pgDB)
 	symbolService := symbol.NewService(symbolRepo)
 	routes.SymbolRoutes(symbolRoute, symbolService)

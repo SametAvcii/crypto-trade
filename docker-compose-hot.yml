@@ -79,6 +79,9 @@ services:
       - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://crypto-trade-kafka:9092
       - KAFKA_ZOOKEEPER_CONNECT=crypto-trade-zookeeper:2181
       - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_LOG_RETENTION_BYTES=104857600  # 100 MB
+      - KAFKA_LOG_RETENTION_HOURS=168 # 7 days
+      - KAFKA_REQUEST_TIMEOUT_MS=30000
     networks:
       - crypto-trade
     depends_on:
@@ -142,6 +145,54 @@ services:
     networks:
       - crypto-trade
  
+  crypto-trade-prometheus:
+    image: prom/prometheus:latest
+    container_name: crypto-trade-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml 
+    ports:
+      - "9090:9090" 
+    networks:
+      - crypto-trade
+    restart: always
+
+  crypto-trade-grafana:
+    image: grafana/grafana:latest
+    container_name: crypto-trade-grafana
+    ports:
+      - "3000:3000"  # Grafana UI portu
+    networks:
+      - crypto-trade
+    restart: always
+    depends_on:
+      - crypto-trade-prometheus
+
+   
+  crypto-trade-postgres-exporter:
+    image: wrouesnel/postgres_exporter:latest
+    container_name: crypto-trade-postgres-exporter
+    environment:
+     - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@crypto-trade-db:5432/${POSTGRES_DB}?sslmode=disable
+
+    ports:
+      - "9187:9187"
+    networks:
+      - crypto-trade
+    depends_on:
+      - crypto-trade-db
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor
+    ports:
+      - "8089:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - crypto-trade
+
 
 volumes:
   crypto-trade_data:
