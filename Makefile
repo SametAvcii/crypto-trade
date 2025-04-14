@@ -5,7 +5,7 @@ run:
 	./crypto-trade
 
 swagger:
-	swag init --quiet --parseDependency
+	swag init --quiet --parseDependency --generalInfo cmd/app/main.go
 
 hot:
 	docker compose -p crypto-trade -f docker-compose-hot.yml up

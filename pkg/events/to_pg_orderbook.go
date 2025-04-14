@@ -77,7 +77,7 @@ func compareAndUpdate(side string, oldData map[string]string, newData [][]string
 		newMap[entry[0]] = entry[1]
 	}
 
-	for price, _ := range oldData {
+	for price := range oldData {
 		newAmount, exists := newMap[price]
 		if !exists || newAmount == "0.00000000" {
 			UpdateStatusInDB(symbol, price, side, consts.ClosedOrder)
