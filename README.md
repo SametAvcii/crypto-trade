@@ -4,11 +4,53 @@ A scalable, fault-tolerant, and secure real-time cryptocurrency trading platform
 
 ---
 
+# 🚀 How to Run
+
+### Prerequisites
+- Docker and Docker Compose
+- Git
+- Make (optional, for convenience commands)
+
+## Clone the repository
+   ```bash
+   git clone https://github.com/SametAvcii/cyrpto-trade.git
+   cd cyrpto-trade 
+   ```
+
+## Run Project
+
+#### Running with Docker Compose (Hot Reload Development):
+
+For a smoother development experience with hot reloading, a separate docker-compose-hot.yml configuration is provided. This setup likely mounts your local code into the container, allowing changes to be reflected without rebuilding the entire container. It also utilizes a specific configuration file (config-hot.yml).
+
+```bash
+   make hot
+   ```
+ Alternatively:
+
+```bash
+   docker compose -p crypto-trade -f docker-compose-hot.yml up
+   ```
+
+
+#### Running with Docker Compose (Directly):
+
+For a smoother development experience with hot reloading, a separate docker-compose-hot.yml configuration is provided. This setup likely mounts your local code into the container, allowing changes to be reflected without rebuilding the entire container. It also utilizes a specific configuration file (config-hot.yml).
+
+```bash
+   make run
+   ```
+ Alternatively:
+
+```bash
+   docker compose -f docker-compose.yml up -d --build
+   ```
+
+
 ## 📈 Scalability Approach
 
 ### 🧩 Microservices Architecture
 - Decoupled **API services** and **consumer services**
-- **Domain-driven modular design**
 - Independent scaling of services based on system load
 
 ### ⚙️ Event-Driven Architecture
@@ -64,11 +106,6 @@ A scalable, fault-tolerant, and secure real-time cryptocurrency trading platform
 
 ## 🔐 Security Implementation
 
-### 🔑 API Security
-- **JWT-based authentication**
-- **Role-based access control (RBAC)**
-- Input validation & sanitization
-
 ### 🛡️ Data Protection
 - Encrypted database connections
 - Secrets managed via environment variables
@@ -91,42 +128,31 @@ A scalable, fault-tolerant, and secure real-time cryptocurrency trading platform
 
 ## 🔧 Challenges Faced & Solutions
 
+### 📈 Moving Average Strategy Evolution
 
-### Real-time Data Processing
-
-**Challenge**: Managing high-throughput data from exchangesSolution:
-
-Buffered processing pipeline with Kafka
-
-Specialized consumers for each data stream
-
-Rate-limited API calls & optimized data structures
-
-📈 Moving Average Strategy Evolution
-
-🧠 Initial Approach & Learnings
+## Initial Approach & Learnings
 
 At the beginning, calculating the moving average (MA) came with several design uncertainties. Initially, we considered using real-time price data (AggTrade events) due to their immediacy. However, this method led to inconsistent results, mainly because:
 
-AggTrade streams are extremely frequent and lack aggregation
+- AggTrade streams are extremely frequent and lack aggregation
 
-Price fluctuations and volume shifts made averages unstable
+- Price fluctuations and volume shifts made averages unstable
 
-There was no guarantee of a finalized price per interval
+- There was no guarantee of a finalized price per interval
 
-🔁 Strategic Shift to Candlestick Data
+## Strategic Shift to Candlestick Data
 
 To improve signal quality, we transitioned to using candlestick (Kline) data, which aggregates price movements over set timeframes. This change offered:
 
-Structured OHLCV data (Open, High, Low, Close, Volume)
+- Structured OHLCV data (Open, High, Low, Close, Volume)
 
-Stable and finalized Close prices ideal for MA calculations
+- Stable and finalized Close prices ideal for MA calculations
 
-Better alignment with traditional market analysis practices
+- Better alignment with traditional market analysis practices
 
-This adjustment resulted in more reliable MA values that better reflected actual market conditions instead of momentary changes.
+- This adjustment resulted in more reliable MA values that better reflected actual market conditions instead of momentary changes.
 
-⏳ Real-time vs. Interval Close Debate
+## Real-time vs. Interval Close Debate
 
 One key decision point was whether to use the live price or wait for the candle to close. While the real-time price could generate faster signals, it introduced noise and premature decisions. Ultimately, we chose to:
 
@@ -136,59 +162,46 @@ Then compute and update the MA value
 
 This method improved signal accuracy and followed best practices in algorithmic trading.
 
-✅ Redis-Based Moving Average Optimization
+## ✅ Redis-Based Moving Average Optimization
 
 To optimize performance:
 
-We store recent close prices (for MA50 and MA200) in Redis lists per symbol and interval
+- We store recent close prices (for MA50 and MA200) in Redis lists per symbol and interval
 
-Each time a candle closes, we append the price and trim the list
+- Each time a candle closes, we append the price and trim the list
 
-Redis commands like RPush and LTrim help maintain fixed-length data
+- Redis commands like RPush and LTrim help maintain fixed-length data
 
-Redis key format:
+## Benefits:
 
-SYMBOL:INTERVAL:ma50
+- Quick updates to MA values
 
-SYMBOL:INTERVAL:ma200
+- Low-latency signal generation
 
-Benefits:
-
-Quick updates to MA values
-
-Low-latency signal generation
-
-Efficient use of memory and simple time windowing
+- Efficient use of memory and simple time windowing
 
 After computation:
 
-Signals are persisted in PostgreSQL and MongoDB
+- Signals are persisted in PostgreSQL and MongoDB
 
-The latest signal is also cached in Redis to avoid sending duplicates
+- The latest signal is also cached in Redis to avoid sending duplicates
 
 
-### 1️⃣ Real-time Data Processing
+### Real-time Data Processing
 **Challenge**: Managing high-throughput data from exchanges  
 **Solution**:
 - Buffered processing pipeline with Kafka
 - Specialized consumers for each data stream
 - Rate-limited API calls & optimized data structures
 
-### 2️⃣ Database Connection Stability
+### Database Connection Stability
 **Challenge**: Handling unstable connections under load  
 **Solution**:
 - Connection pooling with limits
 - Reconnection logic with exponential backoff
 - Periodic health checks and batching
 
-### 3️⃣ Testing Async Components
-**Challenge**: Reliable testing for Kafka-based flows  
-**Solution**:
-- Mock Kafka producers/consumers
-- In-memory databases for isolated tests
-- Business logic decoupled from infra
-
-### 4️⃣ Signal Processing Performance
+### Signal Processing Performance
 **Challenge**: Real-time computation of signals  
 **Solution**:
 - Redis-based sliding window for MAs

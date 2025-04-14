@@ -1,9 +1,6 @@
 build:
 	go build -o crypto-trade  main.go
 
-run: 
-	./crypto-trade
-
 swagger:
 	swag init --quiet --parseDependency --generalInfo cmd/app/main.go
 
