@@ -5,6 +5,7 @@ app:
   jwt_issuer: "crypto-trade"
   jwt_secret: "secret"
   client_id: "crypto-trade"
+  base_url: "http://localhost:8001"
 redis:
   host: crypto-trade-redis
   port: 6379

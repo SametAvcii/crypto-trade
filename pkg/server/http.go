@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
@@ -63,6 +64,13 @@ func LaunchHttpServer(appc config.App, allows config.Allows) {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	app.Use(func(c *gin.Context) {
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+		defer cancel()
+		c.Request = c.Request.WithContext(ctx)
+		c.Next()
+	})
+	
 	p := ginprom.New(
 		ginprom.Engine(app),
 		ginprom.Subsystem("gin"),
