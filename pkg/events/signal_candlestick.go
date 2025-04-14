@@ -11,6 +11,7 @@ import (
 	"github.com/IBM/sarama"
 	"github.com/SametAvcii/crypto-trade/pkg/cache"
 	"github.com/SametAvcii/crypto-trade/pkg/candlestick"
+	"github.com/SametAvcii/crypto-trade/pkg/config"
 	"github.com/SametAvcii/crypto-trade/pkg/consts"
 	"github.com/SametAvcii/crypto-trade/pkg/ctlog"
 	"github.com/SametAvcii/crypto-trade/pkg/database"
@@ -97,25 +98,19 @@ func (s *SignalHandlerCandleStick) HandleMessage(msg *sarama.ConsumerMessage) {
 
 		}
 
-		log.Println("Candlestick count:", len(candleSticks))
-
 		var cnt = 0
 		for _, candle := range candleSticks {
 			if cnt < 50 {
-				log.Println("Pushing to MA50:", candle.Close.String())
 				pipe.RPush(context.Background(), key50, candle.Close.String())
 				cnt++
 			}
-			log.Println("Pushing to MA200:", candle.Close.String())
 			pipe.RPush(context.Background(), key200, candle.Close.String())
 		}
 
 	} else {
-		log.Println("Pushing to MA50:", price.String())
 		pipe.RPush(context.Background(), key50, price.String())
 		pipe.LTrim(context.Background(), key50, -50, -1)
 
-		log.Println("Pushing to MA200:", price.String())
 		pipe.RPush(context.Background(), key200, price.String())
 		pipe.LTrim(context.Background(), key200, -200, -1)
 	}
@@ -170,8 +165,6 @@ func checkForSignal(rdb *redis.Client, symbol, timeframe string) (dtos.MaData, e
 	res.MA50 = ma50.String()
 	res.MA200 = ma200.String()
 
-	log.Println("MA50:", res.MA50)
-	log.Println("MA200:", res.MA200)
 	if lastSignal == consts.BuySignal && ma50.GreaterThan(ma200) {
 		return res, errors.New(consts.AlreadyInBuy)
 	} else if lastSignal == consts.SellSignal && ma50.LessThan(ma200) {
@@ -217,7 +210,22 @@ func checkForSignal(rdb *redis.Client, symbol, timeframe string) (dtos.MaData, e
 		log.Printf("Error inserting signal into Postgres: %v", err)
 
 	}
-	log.Printf("Postgres updated for symbol %s with signal %s", signal.Symbol, signal.Signal)
+
+	//add to mongo signal data
+	mongoDb := database.MongoClient()
+	collName := consts.CollectionNameSignal
+	collection := mongoDb.Database(config.ReadValue().Mongo.Database).Collection(collName)
+	_, err = collection.InsertOne(context.Background(), signal)
+	if err != nil {
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Error inserting signal into MongoDB",
+			Message: "Error inserting signal into MongoDB: " + err.Error(),
+			Type:    "error",
+			Entity:  "signal",
+			Data:    fmt.Sprintf("Symbol: %s, Signal: %s", signal.Symbol, signal.Signal),
+		})
+		log.Printf("Error inserting signal into MongoDB: %v", err)
+	}
 
 	return res, errors.New(consts.AlreadyInHold)
 }

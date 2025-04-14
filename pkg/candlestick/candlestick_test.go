@@ -97,3 +97,5 @@ func TestGetCandleSticksAndUpdate_Success(t *testing.T) {
 	// mockAPI.AssertExpectations(t)
 	// mockPg.AssertExpectations(t)
 }
+
+
