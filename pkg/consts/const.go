@@ -13,3 +13,12 @@ const (
 	SellSignal = "SELL"
 	HoldSignal = "HOLD"
 )
+
+const (
+	Active  = 1
+	Passive = 2
+)
+
+const (
+	Binance = "binance"
+)

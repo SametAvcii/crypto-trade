@@ -1,0 +1,28 @@
+FROM golang:1.24-alpine as builder
+
+RUN apk add --no-cache upx tzdata
+
+WORKDIR /src
+
+COPY . .
+
+RUN go mod download
+
+WORKDIR /src/cmd/consumer
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o consumer .
+RUN upx consumer
+
+FROM scratch
+
+ARG VERSION
+ENV APP_VERSION=$VERSION
+
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+
+WORKDIR /bin/consumer
+
+COPY --from=builder /src/cmd/consumer/consumer .
+COPY config.yaml .
+
+CMD ["./consumer"]

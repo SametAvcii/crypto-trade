@@ -31,7 +31,7 @@ func GetCandleSticksAndUpdate(exchangeId, symbol string, interval string, limit 
 
 	var url string
 	switch exchange.Name {
-	case "binance":
+	case consts.Binance:
 		url = fmt.Sprintf("/klines?symbol=%s"+"&interval=%s&limit=%d", symbol, interval, limit)
 	default:
 		log.Printf("Exchange %s not supported", exchange.Name)

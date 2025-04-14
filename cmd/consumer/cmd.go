@@ -71,12 +71,9 @@ func StartConsumer() {
 
 	// Initialize the consumer
 
-	//dbConsumerAggTrade.Start()
-	//signalConsumerAggTrade.Start()
-	go mongoDbConsumerOrderBook.Start()
-	go dbConsumerOrderBook.Start()
-	//signalConsumerOrderBook.Start()
-	go signalCandlesticks.Start()
+	mongoDbConsumerOrderBook.Start()
+	dbConsumerOrderBook.Start()
+	signalCandlesticks.Start()
 
 	go func() {
 		consumerSuccessCounter.WithLabelValues("mongoDbConsumerOrderBook", consts.OrderBookTopic).Inc()

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/SametAvcii/crypto-trade/pkg/dtos"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,8 +24,8 @@ func TestSignalInterval_FromDto(t *testing.T) {
 			},
 			want: &SignalInterval{
 				Symbol:     "btcusdt",
-				Interval:   "1h", 
-				ExchangeID: "binance",
+				Interval:   "1h",
+				ExchangeID: uuid.New(),
 			},
 			wantErr: false,
 		},
@@ -59,7 +60,7 @@ func TestSignalInterval_UpdateFromDto(t *testing.T) {
 			initial: &SignalInterval{
 				Symbol:     "btcusdt",
 				Interval:   "1h",
-				ExchangeID: "binance",
+				ExchangeID: uuid.New(),
 			},
 			dto: dtos.UpdateSignalIntervalReq{
 				Symbol:     "ETHUSDT",
@@ -69,7 +70,7 @@ func TestSignalInterval_UpdateFromDto(t *testing.T) {
 			want: &SignalInterval{
 				Symbol:     "ethusdt",
 				Interval:   "4h",
-				ExchangeID: "kucoin",
+				ExchangeID: uuid.New(),
 			},
 			wantErr: false,
 		},
@@ -78,7 +79,7 @@ func TestSignalInterval_UpdateFromDto(t *testing.T) {
 			initial: &SignalInterval{
 				Symbol:     "btcusdt",
 				Interval:   "1h",
-				ExchangeID: "binance",
+				ExchangeID: uuid.New(),
 			},
 			dto: dtos.UpdateSignalIntervalReq{
 				Symbol: "ETHUSDT",
@@ -86,7 +87,7 @@ func TestSignalInterval_UpdateFromDto(t *testing.T) {
 			want: &SignalInterval{
 				Symbol:     "ethusdt",
 				Interval:   "1h",
-				ExchangeID: "binance",
+				ExchangeID: uuid.New(),
 			},
 			wantErr: false,
 		},

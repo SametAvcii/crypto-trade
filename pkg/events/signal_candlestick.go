@@ -28,7 +28,7 @@ func (s *SignalHandlerCandleStick) HandleMessage(msg *sarama.ConsumerMessage) {
 	var payload dtos.CandlestickWs
 	if err := json.Unmarshal(msg.Value, &payload); err != nil {
 		ctlog.CreateLog(&entities.Log{
-			Title:   "Error unmarshalling message for order book signal",
+			Title:   "Error unmarshalling message for candlestick signal",
 			Message: "Error unmarshalling message into BSON: " + err.Error(),
 			Type:    "error",
 			Entity:  "candlestick",
@@ -83,14 +83,14 @@ func (s *SignalHandlerCandleStick) HandleMessage(msg *sarama.ConsumerMessage) {
 		if err != nil || len(candleSticks) < 200 {
 			ctlog.CreateLog(&entities.Log{
 				Title:   "Error fetching candlesticks from Postgres",
-				Message: "Error fetching candlesticks from Postgres: " + err.Error(),
+				Message: "Error fetching candlesticks from Postgres:",
 				Type:    "error",
 				Entity:  "candlestick",
 				Data:    string(msg.Value),
 			})
 
 			// If there are no candlesticks in the database, fetch them from the API
-			candleSticks, err = candlestick.GetCandleSticksAndUpdate(interval.ExchangeID, payload.Symbol, interval.Interval, 200)
+			candleSticks, err = candlestick.GetCandleSticksAndUpdate(interval.ExchangeID.String(), payload.Symbol, interval.Interval, 200)
 			if err != nil {
 				log.Println("Error getting candlesticks:", err)
 				return

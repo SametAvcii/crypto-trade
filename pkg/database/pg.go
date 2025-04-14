@@ -58,6 +58,8 @@ func InitDB(cfg config.Database) error {
 		return fmt.Errorf("Database migration failed: %w", err)
 	}
 
+	Seed()
+
 	log.Println("Database initialized and migrations completed successfully.")
 	return nil
 }
@@ -120,6 +122,7 @@ func PgClient() *gorm.DB {
 		log.Println("PostgreSQL reconnected successfully.")
 
 	}
+
 	return db
 }
 func CheckPgAlive(dbc config.Database) {
