@@ -27,8 +27,33 @@ func (s *Symbol) FromDto(dto *dtos.AddSymbolReq) error {
 	return nil
 }
 
-func (s *Symbol) ToDto() *dtos.AddSymbolRes {
-	return &dtos.AddSymbolRes{
+func (s *Symbol) ToDto() dtos.AddSymbolRes {
+	return dtos.AddSymbolRes{
+		ID:         s.ID.String(),
+		Symbol:     s.Symbol,
+		ExchangeID: s.ExchangeID.String(),
+	}
+}
+func (s *Symbol) UpdateFromDto(dto dtos.UpdateSymbolReq) error {
+	s.Symbol = dto.Symbol
+	ExchangeID, err := uuid.Parse(dto.ExchangeID)
+	if err != nil {
+		return err
+	}
+	s.ExchangeID = ExchangeID
+	return nil
+}
+
+func (s *Symbol) ToGetDto() dtos.GetSymbolRes {
+	return dtos.GetSymbolRes{
+		ID:         s.ID.String(),
+		Symbol:     s.Symbol,
+		ExchangeID: s.ExchangeID.String(),
+		IsActive:   s.IsActive,
+	}
+}
+func (s *Symbol) ToDtoUpdate() dtos.UpdateSymbolRes {
+	return dtos.UpdateSymbolRes{
 		ID:         s.ID.String(),
 		Symbol:     s.Symbol,
 		ExchangeID: s.ExchangeID.String(),

@@ -25,3 +25,26 @@ type AddSignalIntervalRes struct {
 	Symbol   string `json:"symbol"`   // BTCUSDT
 	Interval string `json:"interval"` // 1m, 5m, 15m, 1h, 4h, 1d
 }
+type UpdateSignalIntervalReq struct {
+	ID         string `json:"id"`         // 1
+	Symbol     string `json:"symbol"`     // BTCUSDT
+	Interval   string `json:"interval"`   // 1m, 5m, 15m, 1h, 4h, 1d
+	ExchangeId string `json:"exchange_id"` // 1
+}
+
+type UpdateSignalIntervalRes struct {
+	ID       string `json:"id"`       // 1
+	Symbol   string `json:"symbol"`   // BTCUSDT
+	Interval string `json:"interval"` // 1m, 5m, 15m, 1h, 4h, 1d
+}
+
+type GetSignalIntervalReq struct {
+	ID string `json:"id"` // 1
+}
+
+type GetSignalIntervalRes struct {
+	ID         string `json:"id"`         // 1
+	Symbol     string `json:"symbol"`     // BTCUSDT
+	Interval   string `json:"interval"`   // 1m, 5m, 15m, 1h, 4h, 1d
+	ExchangeId string `json:"exchange_id"` // 1
+}

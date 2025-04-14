@@ -9,7 +9,3 @@ type OrderBook struct {
 	Side       string `json:"side"`   // bid or ask
 	Status     string `json:"status"` // open, closed
 }
-
-func (o *OrderBook) FromDto() {
-
-}

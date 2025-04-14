@@ -21,8 +21,37 @@ func (s *SignalInterval) FromDto(dto *dtos.AddSignalIntervalReq) error {
 	s.ExchangeID = dto.ExchangeId
 	return nil
 }
-func (s *SignalInterval) ToDto() *dtos.AddSignalIntervalRes {
-	return &dtos.AddSignalIntervalRes{
+func (s *SignalInterval) ToDto() dtos.AddSignalIntervalRes {
+	return dtos.AddSignalIntervalRes{
+		ID:       s.ID.String(),
+		Symbol:   s.Symbol,
+		Interval: s.Interval,
+	}
+}
+func (s *SignalInterval) UpdateFromDto(dto dtos.UpdateSignalIntervalReq) error {
+	if dto.Symbol != "" {
+		s.Symbol = strings.ToLower(dto.Symbol)
+	}
+	if dto.Interval != "" {
+		s.Interval = dto.Interval
+	}
+	if dto.ExchangeId != "" {
+		s.ExchangeID = dto.ExchangeId
+	}
+	return nil
+}
+
+func (s *SignalInterval) GetDto() dtos.GetSignalIntervalRes {
+	return dtos.GetSignalIntervalRes{
+		ID:         s.ID.String(),
+		Symbol:     s.Symbol,
+		Interval:   s.Interval,
+		ExchangeId: s.ExchangeID,
+	}
+}
+
+func (s *SignalInterval) ToDtoUpdate() dtos.UpdateSignalIntervalRes {
+	return dtos.UpdateSignalIntervalRes{
 		ID:       s.ID.String(),
 		Symbol:   s.Symbol,
 		Interval: s.Interval,

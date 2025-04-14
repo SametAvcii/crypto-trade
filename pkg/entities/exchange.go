@@ -16,14 +16,36 @@ type Exchange struct {
 	IsActive uint   `json:"is_active"` // 1 active, 2 passive
 }
 
-func (e *Exchange) FromDto(req *dtos.AddExchangeReq) {
+func (e *Exchange) FromDto(req dtos.AddExchangeReq) {
 	e.Name = req.Name
 	e.WsUrl = req.WsUrl
 	e.IsActive = ExchangeActive
 }
 
-func (e *Exchange) ToDto() *dtos.AddExchangeRes {
-	return &dtos.AddExchangeRes{
+func (e *Exchange) ToDto() dtos.AddExchangeRes {
+	return dtos.AddExchangeRes{
+		ID:    e.ID.String(),
+		Name:  e.Name,
+		WsUrl: e.WsUrl,
+	}
+}
+
+// FromDtoUpdate is used to update the exchange
+func (e *Exchange) FromDtoUpdate(req dtos.UpdateExchangeReq) {
+	e.Name = req.Name
+	e.WsUrl = req.WsUrl
+}
+
+func (e *Exchange) ToDtoUpdate() dtos.UpdateExchangeRes {
+	return dtos.UpdateExchangeRes{
+		ID:    e.ID.String(),
+		Name:  e.Name,
+		WsUrl: e.WsUrl,
+	}
+}
+
+func (e *Exchange) ToDtoGet() dtos.GetExchangeRes {
+	return dtos.GetExchangeRes{
 		ID:    e.ID.String(),
 		Name:  e.Name,
 		WsUrl: e.WsUrl,
