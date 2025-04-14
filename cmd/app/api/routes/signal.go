@@ -154,7 +154,7 @@ func DeleteSignalInterval(s signal.Service) func(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "Signal ID"
-// @Success 200 {object} map[string]any
+// @Success 200 {object} dtos.GetSignalIntervalRes
 // @Failure 400 {object} map[string]any
 // @Router /signal/interval/{id} [GET]
 func GetSignalIntervalByID(s signal.Service) func(c *gin.Context) {
@@ -189,7 +189,7 @@ func GetSignalIntervalByID(s signal.Service) func(c *gin.Context) {
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Success 200 {object} map[string]any
+// @Success 200 {array} dtos.GetSignalIntervalRes
 // @Failure 400 {object} map[string]any
 // @Router /signal/interval [GET]
 func GetAllSignalIntervals(s signal.Service) func(c *gin.Context) {

@@ -40,7 +40,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.AddSymbolReq"
+                            "$ref": "#/definitions/dtos.AddSymbolReq"
                         }
                     }
                 ],
@@ -79,13 +79,17 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dtos.GetExchangeRes"
+                            }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 }
@@ -109,7 +113,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.AddExchangeReq"
+                            "$ref": "#/definitions/dtos.AddExchangeReq"
                         }
                     }
                 ],
@@ -117,13 +121,14 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created exchange",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.AddExchangeRes"
+                            "$ref": "#/definitions/dtos.AddExchangeRes"
                         }
                     },
                     "400": {
-                        "description": "Bad request",
+                        "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 }
@@ -155,13 +160,14 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/dtos.GetExchangeRes"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 }
@@ -192,7 +198,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.UpdateExchangeReq"
+                            "$ref": "#/definitions/dtos.UpdateExchangeReq"
                         }
                     }
                 ],
@@ -200,13 +206,14 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully updated exchange",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.UpdateExchangeRes"
+                            "$ref": "#/definitions/dtos.UpdateExchangeRes"
                         }
                     },
                     "400": {
-                        "description": "Bad request",
+                        "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 }
@@ -236,13 +243,15 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 }
@@ -307,7 +316,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.AddSignalIntervalReq"
+                            "$ref": "#/definitions/dtos.AddSignalIntervalReq"
                         }
                     }
                 ],
@@ -404,7 +413,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.UpdateSignalIntervalReq"
+                            "$ref": "#/definitions/dtos.UpdateSignalIntervalReq"
                         }
                     }
                 ],
@@ -493,7 +502,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.GetSymbolRes"
+                                "$ref": "#/definitions/dtos.GetSymbolRes"
                             }
                         }
                     },
@@ -538,7 +547,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.GetSymbolRes"
+                            "$ref": "#/definitions/dtos.GetSymbolRes"
                         }
                     },
                     "400": {
@@ -581,7 +590,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_SametAvcii_crypto-trade_pkg_dtos.UpdateSymbolReq"
+                            "$ref": "#/definitions/dtos.UpdateSymbolReq"
                         }
                     }
                 ],
@@ -648,11 +657,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "gin.H": {
-            "type": "object",
-            "additionalProperties": {}
-        },
-        "github_com_SametAvcii_crypto-trade_pkg_dtos.AddExchangeReq": {
+        "dtos.AddExchangeReq": {
             "type": "object",
             "properties": {
                 "name": {
@@ -665,7 +670,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_SametAvcii_crypto-trade_pkg_dtos.AddExchangeRes": {
+        "dtos.AddExchangeRes": {
             "type": "object",
             "properties": {
                 "id": {
@@ -682,7 +687,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_SametAvcii_crypto-trade_pkg_dtos.AddSignalIntervalReq": {
+        "dtos.AddSignalIntervalReq": {
             "type": "object",
             "properties": {
                 "exchange_id": {
@@ -699,7 +704,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_SametAvcii_crypto-trade_pkg_dtos.AddSymbolReq": {
+        "dtos.AddSymbolReq": {
             "type": "object",
             "properties": {
                 "exchange_id": {
@@ -711,7 +716,23 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_SametAvcii_crypto-trade_pkg_dtos.GetSymbolRes": {
+        "dtos.GetExchangeRes": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Binance",
+                    "type": "string"
+                },
+                "ws_url": {
+                    "description": "wss://ws-api.binance.com:443/ws-api/v3",
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.GetSymbolRes": {
             "type": "object",
             "properties": {
                 "exchange_id": {
@@ -729,7 +750,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_SametAvcii_crypto-trade_pkg_dtos.UpdateExchangeReq": {
+        "dtos.UpdateExchangeReq": {
             "type": "object",
             "properties": {
                 "id": {
@@ -745,7 +766,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_SametAvcii_crypto-trade_pkg_dtos.UpdateExchangeRes": {
+        "dtos.UpdateExchangeRes": {
             "type": "object",
             "properties": {
                 "id": {
@@ -761,7 +782,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_SametAvcii_crypto-trade_pkg_dtos.UpdateSignalIntervalReq": {
+        "dtos.UpdateSignalIntervalReq": {
             "type": "object",
             "properties": {
                 "exchange_id": {
@@ -782,7 +803,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_SametAvcii_crypto-trade_pkg_dtos.UpdateSymbolReq": {
+        "dtos.UpdateSymbolReq": {
             "type": "object",
             "properties": {
                 "exchange_id": {

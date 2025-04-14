@@ -26,7 +26,7 @@ func ExchangeRoutes(r *gin.RouterGroup, s exchange.Service) {
 // @Produce json
 // @Param exchange body dtos.AddExchangeReq true "Exchange information"
 // @Success 201 {object} dtos.AddExchangeRes "Successfully created exchange"
-// @Failure 400 {object} gin.H "Bad request"
+// @Failure 400 {object} map[string]any
 // @Router /exchanges [post]
 func AddExchange(s exchange.Service) func(c *gin.Context) {
 	return func(c *gin.Context) {
@@ -77,7 +77,7 @@ func AddExchange(s exchange.Service) func(c *gin.Context) {
 // @Param id path string true "Exchange ID"
 // @Param exchange body dtos.UpdateExchangeReq true "Exchange update information"
 // @Success 200 {object} dtos.UpdateExchangeRes "Successfully updated exchange"
-// @Failure 400 {object} gin.H "Bad request"
+// @Failure 400 {object} map[string]any
 // @Router /exchanges/{id} [put]
 func UpdateExchange(s exchange.Service) func(c *gin.Context) {
 	return func(c *gin.Context) {
@@ -89,9 +89,22 @@ func UpdateExchange(s exchange.Service) func(c *gin.Context) {
 		req.ID = c.Param("id")
 		res, err := s.Update(c, req)
 		if err != nil {
+			ctlog.CreateLog(&entities.Log{
+				Title:   "Update Exchange Error",
+				Message: "Update exchange err: " + err.Error(),
+				Entity:  "exchange",
+				Type:    "error",
+			})
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error(), "status": http.StatusBadRequest})
 			return
 		}
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Update Exchange",
+			Message: "Update exchange success: " + res.Name,
+			Entity:  "exchange",
+			Type:    "success",
+		})
+
 		c.JSON(200, gin.H{"data": res, "status": 200})
 	}
 }
@@ -103,17 +116,30 @@ func UpdateExchange(s exchange.Service) func(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "Exchange ID"
-// @Success 200 {object} gin.H
-// @Failure 400 {object} gin.H
+// @Success 200 {object} dtos.GetExchangeRes
+// @Failure 400 {object} map[string]any
 // @Router /exchanges/{id} [get]
 func GetExchangeById(s exchange.Service) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		res, err := s.GetById(c, id)
 		if err != nil {
+			ctlog.CreateLog(&entities.Log{
+				Title:   "Get Exchange Error",
+				Message: "Get exchange err: " + err.Error(),
+				Entity:  "exchange",
+				Type:    "error",
+			})
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error(), "status": http.StatusBadRequest})
 			return
 		}
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Get Exchange",
+			Message: "Get exchange success: " + res.Name,
+			Entity:  "exchange",
+			Type:    "success",
+		})
+
 		c.JSON(200, gin.H{"data": res, "status": 200})
 	}
 }
@@ -125,16 +151,29 @@ func GetExchangeById(s exchange.Service) func(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "Exchange ID"
-// @Success 200 {object} gin.H
-// @Failure 400 {object} gin.H
+// @Success 200 {object} map[string]any
+// @Failure 400 {object} map[string]any
 // @Router /exchanges/{id} [delete]
 func DeleteExchange(s exchange.Service) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		if err := s.Delete(c, id); err != nil {
+			ctlog.CreateLog(&entities.Log{
+				Title:   "Delete Exchange Error",
+				Message: "Delete exchange err: " + err.Error(),
+				Entity:  "exchange",
+				Type:    "error",
+			})
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error(), "status": http.StatusBadRequest})
 			return
 		}
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Delete Exchange",
+			Message: "Delete exchange success",
+			Entity:  "exchange",
+			Type:    "success",
+		})
+
 		c.JSON(200, gin.H{"message": "Exchange deleted successfully", "status": 200})
 	}
 }
@@ -145,16 +184,30 @@ func DeleteExchange(s exchange.Service) func(c *gin.Context) {
 // @Tags exchanges
 // @Accept json
 // @Produce json
-// @Success 200 {object} gin.H
-// @Failure 400 {object} gin.H
+// @Success 200 {array} dtos.GetExchangeRes
+// @Failure 400 {object} map[string]any
 // @Router /exchanges [get]
 func GetAllExchanges(s exchange.Service) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		res, err := s.GetAll(c)
 		if err != nil {
+			ctlog.CreateLog(&entities.Log{
+				Title:   "Get All Exchanges Error",
+				Message: "Get all exchanges err: " + err.Error(),
+				Entity:  "exchange",
+				Type:    "error",
+			})
+
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error(), "status": http.StatusBadRequest})
 			return
 		}
+
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Get All Exchanges",
+			Message: "Get all exchanges success",
+			Entity:  "exchange",
+			Type:    "success",
+		})
 		c.JSON(200, gin.H{"data": res, "status": 200})
 	}
 }
