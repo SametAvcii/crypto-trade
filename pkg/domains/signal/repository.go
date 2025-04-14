@@ -1,13 +1,19 @@
 package signal
 
 import (
+	"context"
+
 	"github.com/SametAvcii/crypto-trade/pkg/dtos"
 	"github.com/SametAvcii/crypto-trade/pkg/entities"
 	"gorm.io/gorm"
 )
 
 type Repository interface {
-	AddSignalIntervals(req dtos.AddSignalIntervalReq) (*dtos.AddSignalIntervalRes, error)
+	AddSignalIntervals(ctx context.Context, req dtos.AddSignalIntervalReq) (dtos.AddSignalIntervalRes, error)
+	GetSignalInterval(ctx context.Context, id string) (dtos.GetSignalIntervalRes, error)
+	GetAllSignalIntervals(ctx context.Context) ([]dtos.GetSignalIntervalRes, error)
+	DeleteSignalInterval(ctx context.Context, id string) error
+	UpdateSignalInterval(ctx context.Context, req dtos.UpdateSignalIntervalReq) (dtos.UpdateSignalIntervalRes, error)
 }
 
 type repository struct {
@@ -20,12 +26,54 @@ func NewRepo(db *gorm.DB) Repository {
 	}
 }
 
-func (r *repository) AddSignalIntervals(req dtos.AddSignalIntervalReq) (*dtos.AddSignalIntervalRes, error) {
+func (r *repository) AddSignalIntervals(ctx context.Context, req dtos.AddSignalIntervalReq) (dtos.AddSignalIntervalRes, error) {
 	var signal entities.SignalInterval
 	signal.FromDto(&req)
-	err := r.db.Create(&signal).Error
+	err := r.db.WithContext(ctx).Create(&signal).Error
 	if err != nil {
 		return signal.ToDto(), err
 	}
 	return signal.ToDto(), nil
+}
+
+func (r *repository) GetSignalInterval(ctx context.Context, id string) (dtos.GetSignalIntervalRes, error) {
+	var signal entities.SignalInterval
+	err := r.db.WithContext(ctx).First(&signal, id).Error
+	if err != nil {
+		return signal.GetDto(), err
+	}
+	return signal.GetDto(), nil
+}
+
+func (r *repository) GetAllSignalIntervals(ctx context.Context) ([]dtos.GetSignalIntervalRes, error) {
+	var signals []entities.SignalInterval
+	err := r.db.WithContext(ctx).Find(&signals).Error
+	if err != nil {
+		return nil, err
+	}
+	var result []dtos.GetSignalIntervalRes
+	for _, signal := range signals {
+		result = append(result, signal.GetDto())
+	}
+	return result, nil
+}
+
+func (r *repository) DeleteSignalInterval(ctx context.Context, id string) error {
+	return r.db.WithContext(ctx).Delete(&entities.SignalInterval{}, id).Error
+}
+
+func (r *repository) UpdateSignalInterval(ctx context.Context, req dtos.UpdateSignalIntervalReq) (dtos.UpdateSignalIntervalRes, error) {
+	var signal entities.SignalInterval
+	err := r.db.WithContext(ctx).First(&signal, req.ID).Error
+	if err != nil {
+		return signal.ToDtoUpdate(), err
+	}
+
+	signal.UpdateFromDto(req)
+	err = r.db.WithContext(ctx).Save(&signal).Error
+	if err != nil {
+		return signal.ToDtoUpdate(), err
+	}
+
+	return signal.ToDtoUpdate(), nil
 }
