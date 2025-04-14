@@ -7,6 +7,7 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/SametAvcii/crypto-trade/pkg/config"
+	"github.com/SametAvcii/crypto-trade/pkg/consts"
 )
 
 type KafkaClient struct {
@@ -27,8 +28,8 @@ func KafkaClientNew() *KafkaClient {
 func InitKafka(cfg config.Kafka) {
 	once.Do(func() {
 		const (
-			maxRetries    = 5
-			retryInterval = 5 * time.Second
+			maxRetries    = consts.MaxRetries
+			retryInterval = consts.RetryDelay * time.Second
 		)
 
 		var (

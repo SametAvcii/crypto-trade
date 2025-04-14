@@ -80,6 +80,16 @@ func StartConsumer() {
 		consumerFailureCounter.WithLabelValues("mongoDbConsumerOrderBook", consts.OrderBookTopic).Inc()
 	}()
 
+	go func() {
+		consumerSuccessCounter.WithLabelValues("dbConsumerOrderBook", consts.OrderBookTopic).Inc()
+		consumerFailureCounter.WithLabelValues("dbConsumerOrderBook", consts.OrderBookTopic).Inc()
+	}()
+
+	go func() {
+		consumerSuccessCounter.WithLabelValues("signalCandlesticks", consts.CandleStickTopic).Inc()
+		consumerFailureCounter.WithLabelValues("signalCandlesticks", consts.CandleStickTopic).Inc()
+	}()
+
 	log.Println("All consumers started successfully.")
 
 	server.LaunchConsumerServer(config.Consumer)

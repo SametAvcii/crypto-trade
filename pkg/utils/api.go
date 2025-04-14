@@ -3,9 +3,7 @@ package utils
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"time"
 )
@@ -36,7 +34,6 @@ func (t *API) Get(path string, payload interface{}, response interface{}, header
 }
 
 func (t *API) do(req *http.Request, response interface{}) error {
-	log.Println("Request URL:", req.URL.String()) // <--- ekle
 	client := &http.Client{
 		Timeout: 30 * time.Second,
 	}
@@ -47,7 +44,6 @@ func (t *API) do(req *http.Request, response interface{}) error {
 	defer resp.Body.Close()
 
 	body, _ := io.ReadAll(resp.Body)
-	fmt.Println("BODY:", string(body)) // <--- ekle
 
 	decode := json.NewDecoder(bytes.NewReader(body))
 	decode.DisallowUnknownFields()

@@ -58,8 +58,6 @@ func (s *SignalHandlerCandleStick) HandleMessage(msg *sarama.ConsumerMessage) {
 		return
 	}
 
-	log.Println("Interval find for:", interval.Interval)
-
 	key50 := fmt.Sprintf("%s:%s:ma50", payload.Symbol, interval.Interval)
 	key200 := fmt.Sprintf("%s:%s:ma200", payload.Symbol, interval.Interval)
 
