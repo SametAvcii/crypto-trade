@@ -56,6 +56,25 @@ func LaunchHttpServer(appc config.App, allows config.Allows) {
 	app.Use(gin.Recovery())
 	app.Use(otelgin.Middleware(appc.Name))
 
+	pgDB := database.PgClient()
+
+	app.GET("/healthz", func(c *gin.Context) {
+		c.String(http.StatusOK, "OK")
+	})
+
+	app.GET("/readyz", func(c *gin.Context) {
+		sqlDB, err := pgDB.DB()
+		if err != nil {
+			c.String(http.StatusInternalServerError, "Database not ready")
+			return
+		}
+		if err := sqlDB.Ping(); err != nil {
+			c.String(http.StatusInternalServerError, "Database not reachable")
+			return
+		}
+		c.String(http.StatusOK, "READY")
+	})
+
 	app.Use(cors.New(cors.Config{
 		AllowMethods:     allows.Methods,
 		AllowHeaders:     allows.Headers,
@@ -70,7 +89,7 @@ func LaunchHttpServer(appc config.App, allows config.Allows) {
 		c.Request = c.Request.WithContext(ctx)
 		c.Next()
 	})
-	
+
 	p := ginprom.New(
 		ginprom.Engine(app),
 		ginprom.Subsystem("gin"),
@@ -78,8 +97,6 @@ func LaunchHttpServer(appc config.App, allows config.Allows) {
 		ginprom.Ignore("/swagger/*any"),
 	)
 	app.Use(p.Instrument())
-
-	pgDB := database.PgClient()
 
 	api := app.Group("/api/v1")
 	symbolRoute := api.Group("/symbol")
