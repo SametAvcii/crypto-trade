@@ -10,6 +10,7 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/SametAvcii/crypto-trade/pkg/cache"
+	"github.com/SametAvcii/crypto-trade/pkg/config"
 	"github.com/SametAvcii/crypto-trade/pkg/consts"
 	"github.com/SametAvcii/crypto-trade/pkg/ctlog"
 	"github.com/SametAvcii/crypto-trade/pkg/database"
@@ -105,7 +106,7 @@ func UpdateStatusInDB(symbol, price, side, status string) {
 
 	// MongoDB update
 	mongo := database.MongoClient()
-	collection := mongo.Database("crypto").Collection("orderbook")
+	collection := mongo.Database(config.ReadValue().Mongo.Database).Collection(consts.CollectionNameUpdatedOrder)
 	filter := bson.M{"symbol": symbol, "price": price, "side": side}
 	update := bson.M{
 		"$set": bson.M{
@@ -145,7 +146,7 @@ func UpsertToDB(symbol, price, amount, side, status string) {
 
 	// MongoDB upsert
 	mongo := database.MongoClient()
-	collection := mongo.Database("crypto").Collection("orderbook")
+	collection := mongo.Database(config.ReadValue().Mongo.Database).Collection(consts.CollectionNameUpdatedOrder)
 	filter := bson.M{"symbol": symbol, "price": price, "side": side}
 	update := bson.M{
 		"$set": bson.M{
