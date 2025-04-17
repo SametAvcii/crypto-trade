@@ -38,7 +38,7 @@ func (r *repository) AddSignalIntervals(ctx context.Context, req dtos.AddSignalI
 
 func (r *repository) GetSignalInterval(ctx context.Context, id string) (dtos.GetSignalIntervalRes, error) {
 	var signal entities.SignalInterval
-	err := r.db.WithContext(ctx).First(&signal, id).Error
+	err := r.db.WithContext(ctx).Where("id = ?", id).First(&signal).Error
 	if err != nil {
 		return signal.GetDto(), err
 	}
@@ -59,20 +59,20 @@ func (r *repository) GetAllSignalIntervals(ctx context.Context) ([]dtos.GetSigna
 }
 
 func (r *repository) DeleteSignalInterval(ctx context.Context, id string) error {
-	return r.db.WithContext(ctx).Delete(&entities.SignalInterval{}, id).Error
+	return r.db.WithContext(ctx).Where("id = ?", id).Delete(&entities.SignalInterval{}).Error
 }
 
 func (r *repository) UpdateSignalInterval(ctx context.Context, req dtos.UpdateSignalIntervalReq) (dtos.UpdateSignalIntervalRes, error) {
 	var signal entities.SignalInterval
-	err := r.db.WithContext(ctx).First(&signal, req.ID).Error
+	err := r.db.WithContext(ctx).Where("id = ?", req.ID).First(&signal).Error
 	if err != nil {
-		return signal.ToDtoUpdate(), err
+		return dtos.UpdateSignalIntervalRes{}, err
 	}
 
 	signal.UpdateFromDto(req)
-	err = r.db.WithContext(ctx).Save(&signal).Error
+	err = r.db.WithContext(ctx).Where("id = ?", req.ID).Updates(&signal).Error
 	if err != nil {
-		return signal.ToDtoUpdate(), err
+		return dtos.UpdateSignalIntervalRes{}, err
 	}
 
 	return signal.ToDtoUpdate(), nil

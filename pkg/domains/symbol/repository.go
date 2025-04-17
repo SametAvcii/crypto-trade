@@ -38,7 +38,7 @@ func (r *repository) AddSymbol(ctx context.Context, req dtos.AddSymbolReq) (dtos
 
 func (r *repository) GetByID(ctx context.Context, id string) (dtos.GetSymbolRes, error) {
 	var symbol entities.Symbol
-	err := r.db.WithContext(ctx).First(&symbol, id).Error
+	err := r.db.WithContext(ctx).Where("id = ?", id).First(&symbol).Error
 	if err != nil {
 		return dtos.GetSymbolRes{}, err
 	}
@@ -59,12 +59,12 @@ func (r *repository) GetAll(ctx context.Context) ([]dtos.GetSymbolRes, error) {
 }
 
 func (r *repository) Delete(ctx context.Context, id string) error {
-	return r.db.WithContext(ctx).Delete(&entities.Symbol{}, id).Error
+	return r.db.WithContext(ctx).Where("id = ?", id).Delete(&entities.Symbol{}).Error
 }
 
 func (r *repository) Update(ctx context.Context, req dtos.UpdateSymbolReq) (dtos.UpdateSymbolRes, error) {
 	var symbol entities.Symbol
-	err := r.db.WithContext(ctx).First(&symbol, req.ID).Error
+	err := r.db.WithContext(ctx).Where("id = ?", req.ID).First(&symbol).Error
 	if err != nil {
 		return dtos.UpdateSymbolRes{}, err
 	}

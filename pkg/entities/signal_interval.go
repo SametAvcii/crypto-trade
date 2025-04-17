@@ -12,7 +12,7 @@ type SignalInterval struct {
 	Symbol     string    `json:"symbol"`   //BTCUSDT
 	Interval   string    `json:"interval"` // 1m, 5m, 15m, 1h, 4h, 1d
 	ExchangeID uuid.UUID `json:"exchange_id"`
-	IsActive   int       `json:"is_active"` // 1: active, 2: inactive
+	IsActive   uint      `json:"is_active"` // 1: active, 2: inactive
 }
 
 func (s *SignalInterval) FromDto(dto *dtos.AddSignalIntervalReq) error {
@@ -21,6 +21,7 @@ func (s *SignalInterval) FromDto(dto *dtos.AddSignalIntervalReq) error {
 	s.Symbol = symbol
 	s.Interval = dto.Interval
 	s.ExchangeID = uuid.MustParse(dto.ExchangeId)
+	s.IsActive = 1
 	return nil
 }
 func (s *SignalInterval) ToDto() dtos.AddSignalIntervalRes {
@@ -40,6 +41,7 @@ func (s *SignalInterval) UpdateFromDto(dto dtos.UpdateSignalIntervalReq) error {
 	if dto.ExchangeId != "" {
 		s.ExchangeID = uuid.MustParse(dto.ExchangeId)
 	}
+
 	return nil
 }
 
@@ -55,8 +57,9 @@ func (s *SignalInterval) GetDto() dtos.GetSignalIntervalRes {
 
 func (s *SignalInterval) ToDtoUpdate() dtos.UpdateSignalIntervalRes {
 	return dtos.UpdateSignalIntervalRes{
-		ID:       s.ID.String(),
-		Symbol:   s.Symbol,
-		Interval: s.Interval,
+		ID:         s.ID.String(),
+		Symbol:     s.Symbol,
+		Interval:   s.Interval,
+		ExchangeId: s.ExchangeID.String(),
 	}
 }

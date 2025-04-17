@@ -96,10 +96,9 @@ func TestUpdateSignalInterval(t *testing.T) {
 	router := gin.Default()
 	group := router.Group("/signal")
 	SignalRoutes(group, mockService)
-
 	t.Run("Success", func(t *testing.T) {
-		req := dtos.UpdateSignalIntervalReq{Symbol: "BTC"}
-		expectedRes := &dtos.UpdateSignalIntervalRes{Symbol: "BTC"}
+		req := dtos.UpdateSignalIntervalReq{ID: "1", Symbol: "BTC"}
+		expectedRes := dtos.UpdateSignalIntervalRes{ID: "1", Symbol: "BTC"}
 
 		mockService.On("UpdateSignalIntervals", mock.Anything, req).Return(expectedRes, nil).Once()
 
@@ -110,6 +109,7 @@ func TestUpdateSignalInterval(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
+
 }
 
 func TestDeleteSignalInterval(t *testing.T) {
@@ -138,7 +138,7 @@ func TestGetSignalIntervalByID(t *testing.T) {
 	SignalRoutes(group, mockService)
 
 	t.Run("Success", func(t *testing.T) {
-		expectedRes := &dtos.GetSignalIntervalRes{Symbol: "BTC"}
+		expectedRes := dtos.GetSignalIntervalRes{ID: "1", Symbol: "BTC"}
 		mockService.On("GetSignalIntervalById", mock.Anything, "1").Return(expectedRes, nil).Once()
 
 		w := httptest.NewRecorder()

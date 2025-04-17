@@ -41,6 +41,7 @@ func (e *Exchange) ToDtoUpdate() dtos.UpdateExchangeRes {
 		ID:    e.ID.String(),
 		Name:  e.Name,
 		WsUrl: e.WsUrl,
+		
 	}
 }
 

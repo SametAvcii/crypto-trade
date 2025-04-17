@@ -1,8 +1,9 @@
 module github.com/SametAvcii/crypto-trade
 
-go 1.24.1
+go 1.24.0
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/Depado/ginprom v1.8.1
 	github.com/IBM/sarama v1.45.1
 	github.com/alicebob/miniredis/v2 v2.34.0

@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/SametAvcii/crypto-trade/pkg/dtos"
-	"github.com/SametAvcii/crypto-trade/pkg/entities"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -45,9 +44,6 @@ func (m *mockExchangeService) GetAll(ctx context.Context) ([]dtos.GetExchangeRes
 
 func TestAddExchange(t *testing.T) {
 	mockService := new(mockExchangeService)
-	router := gin.Default()
-	gin.SetMode(gin.TestMode)
-
 	req := dtos.AddExchangeReq{
 		Name:  "Test Exchange",
 		WsUrl: "ws://test.com",
@@ -58,6 +54,9 @@ func TestAddExchange(t *testing.T) {
 	}
 
 	mockService.On("AddExchange", mock.Anything, req).Return(res, nil)
+
+	router := gin.Default()
+	gin.SetMode(gin.TestMode)
 
 	router.POST("/exchanges", AddExchange(mockService))
 
@@ -77,20 +76,17 @@ func TestGetExchangeById(t *testing.T) {
 	router := gin.Default()
 	gin.SetMode(gin.TestMode)
 
-	var exchange entities.Exchange
+	exchange := dtos.GetExchangeRes{
+		ID:    "46",
+		Name:  "Test Exchange",
+		WsUrl: "ws://test.com",
+	}
 
-	newId := exchange.ID.String()
-	exchange.Name = "Test Exchange"
-
-	mockService.On("GetById", mock.Anything, newId).Return(exchange, nil)
-
+	mockService.On("GetById", mock.Anything, "46").Return(exchange, nil)
 	router.GET("/exchanges/:id", GetExchangeById(mockService))
-
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest("GET", "/exchanges/1", nil)
-
+	r := httptest.NewRequest("GET", "/exchanges/46", nil)
 	router.ServeHTTP(w, r)
-
 	assert.Equal(t, 200, w.Code)
 	mockService.AssertExpectations(t)
 }
@@ -129,6 +125,38 @@ func TestGetAllExchanges(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/exchanges", nil)
+
+	router.ServeHTTP(w, r)
+
+	assert.Equal(t, 200, w.Code)
+	mockService.AssertExpectations(t)
+}
+
+func TestUpdateExchange(t *testing.T) {
+	mockService := new(mockExchangeService)
+	router := gin.Default()
+	gin.SetMode(gin.TestMode)
+
+	req := dtos.UpdateExchangeReq{
+		ID:    "1",
+		Name:  "Updated Exchange",
+		WsUrl: "ws://updated.com",
+	}
+
+	res := dtos.UpdateExchangeRes{
+		ID:    "1",
+		Name:  "Updated Exchange",
+		WsUrl: "ws://updated.com",
+	}
+
+	mockService.On("Update", mock.Anything, req).Return(res, nil)
+
+	router.PUT("/exchanges/:id", UpdateExchange(mockService))
+
+	body, _ := json.Marshal(req)
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("PUT", "/exchanges/1", bytes.NewBuffer(body))
+	r.Header.Set("Content-Type", "application/json")
 
 	router.ServeHTTP(w, r)
 

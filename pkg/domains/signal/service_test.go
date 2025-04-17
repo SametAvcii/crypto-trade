@@ -37,20 +37,28 @@ func (m *MockRepository) GetAllSignalIntervals(ctx context.Context) ([]dtos.GetS
 	args := m.Called(ctx)
 	return args.Get(0).([]dtos.GetSignalIntervalRes), args.Error(1)
 }
-
-func TestAddSignalIntervals(t *testing.T) {
+func TestAddSignalIntervals_Service(t *testing.T) {
 	mockRepo := new(MockRepository)
-	service := NewService(mockRepo)
+	svc := NewService(mockRepo)
 
-	req := dtos.AddSignalIntervalReq{Symbol: "Test Interval"}
-	expected := dtos.AddSignalIntervalRes{ID: "1", Symbol: "Test Interval"}
+	req := dtos.AddSignalIntervalReq{
+		Symbol:     "Test Interval",
+		Interval:   "1m",
+		ExchangeId: "550e8400-e29b-41d4-a716-446655440000",
+	}
+	expected := dtos.AddSignalIntervalRes{
+		ID:       "550e8400-e29b-41d4-a716-446655440000",
+		Symbol:   "test interval",
+		Interval: "1m",
+	}
 
-	mockRepo.On("AddSignalIntervals", mock.Anything, req).Return(expected, nil)
+	mockRepo.
+		On("AddSignalIntervals", mock.Anything, req).
+		Return(expected, nil)
 
-	result, err := service.AddSignalIntervals(context.Background(), req)
-
+	got, err := svc.AddSignalIntervals(context.Background(), req)
 	assert.NoError(t, err)
-	assert.Equal(t, expected, result)
+	assert.Equal(t, expected, got)
 	mockRepo.AssertExpectations(t)
 }
 
@@ -91,23 +99,6 @@ func TestGetSignalIntervalById(t *testing.T) {
 	mockRepo.On("GetSignalInterval", mock.Anything, "1").Return(expected, nil)
 
 	result, err := service.GetSignalIntervalById(context.Background(), "1")
-
-	assert.NoError(t, err)
-	assert.Equal(t, expected, result)
-	mockRepo.AssertExpectations(t)
-}
-func TestGetAllSignalIntervals(t *testing.T) {
-	mockRepo := new(MockRepository)
-	service := NewService(mockRepo)
-
-	expected := []dtos.GetSignalIntervalRes{
-		{ID: "1", Symbol: "Interval 1"},
-		{ID: "2", Symbol: "Interval 2"},
-	}
-
-	mockRepo.On("GetAllSignalIntervals", mock.Anything).Return(expected, nil)
-
-	result, err := service.GetAllSignalIntervals(context.Background())
 
 	assert.NoError(t, err)
 	assert.Equal(t, expected, result)

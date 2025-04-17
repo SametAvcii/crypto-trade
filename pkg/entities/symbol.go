@@ -24,6 +24,7 @@ func (s *Symbol) FromDto(dto *dtos.AddSymbolReq) error {
 		return err
 	}
 	s.ExchangeID = ExchangeID
+	s.IsActive = SymbolActive
 	return nil
 }
 

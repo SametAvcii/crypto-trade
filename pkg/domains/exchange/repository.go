@@ -2,6 +2,7 @@ package exchange
 
 import (
 	"context"
+
 	"github.com/SametAvcii/crypto-trade/pkg/dtos"
 	"github.com/SametAvcii/crypto-trade/pkg/entities"
 	"gorm.io/gorm"
@@ -37,7 +38,7 @@ func (r *repository) AddExchange(ctx context.Context, req dtos.AddExchangeReq) (
 
 func (r *repository) UpdateExchange(ctx context.Context, req dtos.UpdateExchangeReq) (dtos.UpdateExchangeRes, error) {
 	var exchange entities.Exchange
-	if err := r.db.WithContext(ctx).First(&exchange, req.ID).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ?", req.ID).First(&exchange).Error; err != nil {
 		return dtos.UpdateExchangeRes{}, err
 	}
 
@@ -50,12 +51,12 @@ func (r *repository) UpdateExchange(ctx context.Context, req dtos.UpdateExchange
 }
 
 func (r *repository) DeleteExchange(ctx context.Context, id string) error {
-	return r.db.WithContext(ctx).Delete(&entities.Exchange{}, id).Error
+	return r.db.WithContext(ctx).Where("id = ?", id).Delete(&entities.Exchange{}).Error
 }
 
 func (r *repository) GetExchangeById(ctx context.Context, id string) (dtos.GetExchangeRes, error) {
 	var exchange entities.Exchange
-	if err := r.db.WithContext(ctx).First(&exchange, id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("id = ?", id).First(&exchange).Error; err != nil {
 		return dtos.GetExchangeRes{}, err
 	}
 	return exchange.ToDtoGet(), nil

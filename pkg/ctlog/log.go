@@ -7,5 +7,8 @@ import (
 
 func CreateLog(payload *entities.Log) {
 	db := database.PgClient()
+	if db == nil {
+		return
+	}
 	db.Model(&entities.Log{}).Create(payload)
 }

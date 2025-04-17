@@ -43,7 +43,7 @@ func TestAddSymbol(t *testing.T) {
 	service := NewService(mockRepo)
 
 	req := dtos.AddSymbolReq{Symbol: "BTC/USDT"}
-	expected := &dtos.AddSymbolRes{ID: "1", Symbol: "BTC/USDT"}
+	expected := dtos.AddSymbolRes{ID: "1", Symbol: "BTC/USDT"}
 
 	mockRepo.On("AddSymbol", mock.Anything, req).Return(expected, nil)
 
@@ -58,7 +58,7 @@ func TestGetSymbol(t *testing.T) {
 	mockRepo := new(MockRepository)
 	service := NewService(mockRepo)
 
-	expected := &dtos.GetSymbolRes{ID: "1", Symbol: "BTC/USDT"}
+	expected := dtos.GetSymbolRes{ID: "1", Symbol: "BTC/USDT"}
 
 	mockRepo.On("GetByID", mock.Anything, "1").Return(expected, nil)
 
@@ -104,7 +104,7 @@ func TestUpdateSymbol(t *testing.T) {
 	service := NewService(mockRepo)
 
 	req := dtos.UpdateSymbolReq{ID: "1", Symbol: "Updated BTC/USDT"}
-	expected := &dtos.UpdateSymbolRes{ID: "1", Symbol: "Updated BTC/USDT"}
+	expected := dtos.UpdateSymbolRes{ID: "1", Symbol: "Updated BTC/USDT"}
 
 	mockRepo.On("Update", mock.Anything, req).Return(expected, nil)
 
