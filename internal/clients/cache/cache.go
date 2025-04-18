@@ -41,7 +41,7 @@ func RedisClient() *redis.Client {
 	return client
 }
 
-func RedisAlive(rds config.Redis) {
+func RedisAlive(ctx context.Context, rds config.Redis) {
 
 	timeTicker := time.NewTicker(15 * time.Second)
 

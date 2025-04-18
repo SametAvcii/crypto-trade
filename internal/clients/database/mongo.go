@@ -85,7 +85,7 @@ func MongoDatabase(cfg config.Mongo) *mongo.Database {
 	return MongoClient().Database(cfg.Database)
 }
 
-func CheckMongoAlive(cfg config.Mongo) {
+func CheckMongoAlive(ctx context.Context, cfg config.Mongo) {
 	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 

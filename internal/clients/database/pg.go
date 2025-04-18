@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sync"
@@ -125,7 +126,7 @@ func PgClient() *gorm.DB {
 
 	return db
 }
-func CheckPgAlive(dbc config.Database) {
+func CheckPgAlive(ctx context.Context, dbc config.Database) {
 	timeTicker := time.NewTicker(15 * time.Second)
 
 	var (

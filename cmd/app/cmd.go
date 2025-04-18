@@ -1,7 +1,11 @@
 package main
 
 import (
+	"context"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/SametAvcii/crypto-trade/internal/clients/cache"
 	"github.com/SametAvcii/crypto-trade/internal/clients/database"
@@ -15,18 +19,25 @@ import (
 )
 
 func StartApp() {
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
 	config := config.InitConfig()
 	database.InitDB(config.Database)
-	go database.CheckPgAlive(config.Database)
+	go database.CheckPgAlive(ctx, config.Database)
 
 	database.InitMongo(config.Mongo)
-	go database.CheckMongoAlive(config.Mongo)
+	go database.CheckMongoAlive(ctx, config.Mongo)
 
 	cache.InitRedis(config.Redis)
-	go cache.RedisAlive(config.Redis)
+	go cache.RedisAlive(ctx, config.Redis)
 
 	kafka.InitKafka(config.Kafka)
-	go kafka.CheckKafkaAlive(config.Kafka)
+	go kafka.CheckKafkaAlive(ctx, config.Kafka)
 
 	stream := events.NewStream(database.PgClient(), kafka.KafkaClientNew())
 
@@ -88,5 +99,10 @@ func StartApp() {
 	log.Println("All streams started successfully.")
 
 	server.LaunchHttpServer(config.App, config.Allows)
+
+	<-quit
+	log.Println("Shutdown signal received. Cleaning up...")
+
+	cancel()
 
 }

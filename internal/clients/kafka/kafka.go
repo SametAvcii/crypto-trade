@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"context"
 	"log"
 	"time"
 
@@ -117,7 +118,7 @@ func InitKafka(cfg config.Kafka) {
 
 }
 
-func CheckKafkaAlive(cfg config.Kafka) {
+func CheckKafkaAlive(ctx context.Context, cfg config.Kafka) {
 	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 

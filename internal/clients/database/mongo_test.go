@@ -67,7 +67,7 @@ func TestCheckMongoAlive(t *testing.T) {
 		done <- true
 	}()
 
-	go CheckMongoAlive(cfg)
+	go CheckMongoAlive(context.Background(), cfg)
 
 	<-done
 	assert.False(t, MongoAlive)

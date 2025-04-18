@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -84,7 +85,7 @@ func TestCheckPgAlive(t *testing.T) {
 		done <- true
 	}()
 
-	go CheckPgAlive(cfg)
+	go CheckPgAlive(context.Background(), cfg)
 
 	<-done
 	assert.True(t, Alive)
