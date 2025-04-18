@@ -11,8 +11,8 @@ import (
 
 	"github.com/Depado/ginprom"
 	"github.com/SametAvcii/crypto-trade/cmd/app/api/routes"
+	"github.com/SametAvcii/crypto-trade/internal/clients/database"
 	"github.com/SametAvcii/crypto-trade/pkg/config"
-	"github.com/SametAvcii/crypto-trade/pkg/database"
 	"github.com/SametAvcii/crypto-trade/pkg/domains/exchange"
 	"github.com/SametAvcii/crypto-trade/pkg/domains/signal"
 	"github.com/SametAvcii/crypto-trade/pkg/domains/symbol"

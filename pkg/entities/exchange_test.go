@@ -18,7 +18,7 @@ func TestExchange_FromDto(t *testing.T) {
 
 	assert.Equal(t, req.Name, exchange.Name)
 	assert.Equal(t, req.WsUrl, exchange.WsUrl)
-	assert.Equal(t, ExchangeActive, exchange.IsActive)
+	assert.Equal(t, uint(ExchangeActive), exchange.IsActive)
 }
 
 func TestExchange_ToDto(t *testing.T) {

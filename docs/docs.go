@@ -279,8 +279,10 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dtos.GetSignalIntervalRes"
+                            }
                         }
                     },
                     "400": {
@@ -369,8 +371,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/dtos.GetSignalIntervalRes"
                         }
                     },
                     "400": {
@@ -732,6 +733,31 @@ const docTemplate = `{
                 }
             }
         },
+        "dtos.GetSignalIntervalRes": {
+            "type": "object",
+            "properties": {
+                "exchange_id": {
+                    "description": "1",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "1",
+                    "type": "string"
+                },
+                "interval": {
+                    "description": "1m, 5m, 15m, 1h, 4h, 1d",
+                    "type": "string"
+                },
+                "is_active": {
+                    "description": "1: active, 2: inactive",
+                    "type": "integer"
+                },
+                "symbol": {
+                    "description": "BTCUSDT",
+                    "type": "string"
+                }
+            }
+        },
         "dtos.GetSymbolRes": {
             "type": "object",
             "properties": {
@@ -790,7 +816,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "description": "1",
                     "type": "string"
                 },
                 "interval": {

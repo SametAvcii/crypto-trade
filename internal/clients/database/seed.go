@@ -21,6 +21,14 @@ func Seed() {
 	if err != nil {
 		err = db.Create(exchange).Error
 		if err != nil {
+			errLog := &entities.Log{
+				Title:   "Error creating exchange from seed",
+				Message: "Error creating exchange from seed: " + err.Error(),
+				Entity:  "exchange",
+				Type:    "error",
+			}
+			db.Model(&entities.Log{}).Create(errLog)
+
 			log.Println("Error creating exchange:", err)
 			return
 		}
@@ -35,6 +43,14 @@ func Seed() {
 	if err != nil {
 		err = db.Create(symbol).Error
 		if err != nil {
+			errLog := &entities.Log{
+				Title:   "Error creating symbol from seed",
+				Message: "Error creating symbol from seed: " + err.Error(),
+				Entity:  "symbol",
+				Type:    "error",
+			}
+			db.Model(&entities.Log{}).Create(errLog)
+
 			log.Println("Error creating symbol:", err)
 			return
 		}
@@ -50,10 +66,27 @@ func Seed() {
 	if err != nil {
 		err = db.Create(signalInterval).Error
 		if err != nil {
+			errLog := &entities.Log{
+				Title:   "Error creating signal interval from seed",
+				Message: "Error creating signal interval from seed: " + err.Error(),
+				Entity:  "signal_interval",
+				Type:    "error",
+			}
+
+			db.Model(&entities.Log{}).Create(errLog)
 			log.Println("Error creating signal interval:", err)
 			return
 		}
 	}
+
+	infoLog := &entities.Log{
+		Title:   "Dummy data created",
+		Message: "Dummy data created successfully",
+		Entity:  "seed",
+		Type:    "info",
+	}
+	db.Model(&entities.Log{}).Create(infoLog)
+
 	log.Println("Dummy data created successfully")
 
 }

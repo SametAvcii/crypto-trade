@@ -52,6 +52,24 @@ definitions:
         description: wss://ws-api.binance.com:443/ws-api/v3
         type: string
     type: object
+  dtos.GetSignalIntervalRes:
+    properties:
+      exchange_id:
+        description: "1"
+        type: string
+      id:
+        description: "1"
+        type: string
+      interval:
+        description: 1m, 5m, 15m, 1h, 4h, 1d
+        type: string
+      is_active:
+        description: '1: active, 2: inactive'
+        type: integer
+      symbol:
+        description: BTCUSDT
+        type: string
+    type: object
   dtos.GetSymbolRes:
     properties:
       exchange_id:
@@ -92,7 +110,6 @@ definitions:
         description: "1"
         type: string
       id:
-        description: "1"
         type: string
       interval:
         description: 1m, 5m, 15m, 1h, 4h, 1d
@@ -289,8 +306,9 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            items:
+              $ref: '#/definitions/dtos.GetSignalIntervalRes'
+            type: array
         "400":
           description: Bad Request
           schema:
@@ -375,8 +393,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/dtos.GetSignalIntervalRes'
         "400":
           description: Bad Request
           schema:

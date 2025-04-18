@@ -1,4 +1,4 @@
-package events
+package kafka
 
 import (
 	"github.com/IBM/sarama"

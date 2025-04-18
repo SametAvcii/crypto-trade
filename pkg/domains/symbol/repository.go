@@ -33,6 +33,7 @@ func (r *repository) AddSymbol(ctx context.Context, req dtos.AddSymbolReq) (dtos
 	if err != nil {
 		return symbol.ToDto(), err
 	}
+	
 	return symbol.ToDto(), nil
 }
 

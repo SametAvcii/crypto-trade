@@ -9,12 +9,12 @@ import (
 	"strings"
 
 	"github.com/IBM/sarama"
-	"github.com/SametAvcii/crypto-trade/pkg/cache"
+	"github.com/SametAvcii/crypto-trade/internal/clients/cache"
+	"github.com/SametAvcii/crypto-trade/internal/clients/database"
 	"github.com/SametAvcii/crypto-trade/pkg/candlestick"
 	"github.com/SametAvcii/crypto-trade/pkg/config"
 	"github.com/SametAvcii/crypto-trade/pkg/consts"
 	"github.com/SametAvcii/crypto-trade/pkg/ctlog"
-	"github.com/SametAvcii/crypto-trade/pkg/database"
 	"github.com/SametAvcii/crypto-trade/pkg/dtos"
 	"github.com/SametAvcii/crypto-trade/pkg/entities"
 	"github.com/redis/go-redis/v9"
@@ -38,7 +38,7 @@ func (s *SignalHandlerCandleStick) HandleMessage(msg *sarama.ConsumerMessage) {
 	}
 
 	// Check if the candlestick is closed
-	if payload.Kline.IsKlineClosed == false {
+	if !payload.Kline.IsKlineClosed {
 		log.Println("Candlestick is not closed, skipping...")
 		return
 	}
@@ -159,7 +159,7 @@ func checkForSignal(rdb *redis.Client, symbol, timeframe string) (dtos.MaData, e
 			Entity:  "signal",
 			Data:    fmt.Sprintf("Symbol: %s, Timeframe: %s", symbol, timeframe),
 		})
-		return res, fmt.Errorf("Redis read error: %v", err)
+		return res, fmt.Errorf("redis read error: %v", err)
 	}
 
 	var lastSignal string

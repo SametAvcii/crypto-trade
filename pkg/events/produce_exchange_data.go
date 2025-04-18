@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SametAvcii/crypto-trade/internal/clients/kafka"
 	"github.com/SametAvcii/crypto-trade/pkg/consts"
 	"github.com/SametAvcii/crypto-trade/pkg/ctlog"
 	"github.com/SametAvcii/crypto-trade/pkg/entities"
@@ -15,10 +16,10 @@ import (
 
 type Stream struct {
 	DB    *gorm.DB
-	Kafka *KafkaClient
+	Kafka *kafka.KafkaClient
 }
 
-func NewStream(db *gorm.DB, kafkaClient *KafkaClient) *Stream {
+func NewStream(db *gorm.DB, kafkaClient *kafka.KafkaClient) *Stream {
 	return &Stream{
 		DB:    db,
 		Kafka: kafkaClient,
@@ -62,7 +63,6 @@ func (s *Stream) GetStreamSymbols(exchangeID string) ([]entities.Symbol, error) 
 	var symbols []entities.Symbol
 	err := s.DB.Where("exchange_id = ?", exchangeID).Find(&symbols).Error
 	if err != nil {
-
 		ctlog.CreateLog(&entities.Log{
 			Title:   "Error fetching symbols from Postgres",
 			Message: fmt.Sprintf("Error fetching symbols from Postgres for exchange ID %s: %v", exchangeID, err),
@@ -90,6 +90,9 @@ func (s *Stream) GetSymbolIntervals(exchangeID, symbol string) ([]entities.Signa
 
 		return intervals, err
 	}
+	if len(intervals) == 0 {
+		return intervals, fmt.Errorf("no intervals found for symbol %s", symbol)
+	}
 	return intervals, nil
 }
 
@@ -103,7 +106,6 @@ func (s *Stream) StartAllStreams(exchangeID, topic string) error {
 			Entity:  "stream",
 			Data:    fmt.Sprintf("Exchange ID: %s", exchangeID),
 		})
-
 		return fmt.Errorf("WebSocket URL not found for exchange ID: %s", exchangeID)
 	}
 
@@ -116,17 +118,15 @@ func (s *Stream) StartAllStreams(exchangeID, topic string) error {
 			Entity:  "stream",
 			Data:    fmt.Sprintf("Exchange ID: %s", exchangeID),
 		})
-
 		return err
 	}
 
-	for _, symbol := range symbols {
+	for _, sym := range symbols {
+		symbol := sym
 
 		switch topic {
 		case consts.OrderBookTopic:
-
 			go func() {
-
 				wsURL := fmt.Sprintf("%s/ws/%s@%s", wsBase, strings.ToLower(symbol.Symbol), consts.StreamOrderBook)
 				log.Printf("Connecting to WS for %s symbol: %s", consts.StreamOrderBook, symbol.Symbol)
 
@@ -168,9 +168,8 @@ func (s *Stream) StartAllStreams(exchangeID, topic string) error {
 					Entity:  "stream",
 					Data:    fmt.Sprintf("Symbol: %s", symbol.Symbol),
 				})
-
 				log.Printf("Error getting intervals for %s: %v", symbol.Symbol, err)
-				return err
+				continue
 			}
 
 			if len(intervals) == 0 {
@@ -181,9 +180,8 @@ func (s *Stream) StartAllStreams(exchangeID, topic string) error {
 					Entity:  "stream",
 					Data:    fmt.Sprintf("Symbol: %s", symbol.Symbol),
 				})
-
 				log.Printf("No intervals found for %s", symbol.Symbol)
-				return err
+				continue
 			}
 
 			for _, interval := range intervals {
@@ -208,9 +206,15 @@ func (s *Stream) StartAllStreams(exchangeID, topic string) error {
 
 		default:
 			log.Printf("Unknown topic: %s", topic)
+			ctlog.CreateLog(&entities.Log{
+				Title:   "Unknown Topic",
+				Message: fmt.Sprintf("Unknown topic: %s", topic),
+				Type:    "error",
+				Entity:  "stream",
+				Data:    fmt.Sprintf("Topic: %s", topic),
+			})
 			continue
 		}
-
 	}
 
 	return nil
@@ -259,6 +263,13 @@ func (s *Stream) startSymbolStream(wsURL, symbol, topic string) error {
 
 			_, _, err = s.Kafka.Produce(topic, symbol, []byte(message))
 			if err != nil {
+				ctlog.CreateLog(&entities.Log{
+					Title:   "Kafka Write Error",
+					Message: fmt.Sprintf("Kafka write error for %s: %v", symbol, err),
+					Type:    "error",
+					Entity:  "stream",
+					Data:    fmt.Sprintf("Topic: %s, Symbol: %s", topic, symbol),
+				})
 				log.Printf("[%s] Kafka write error: %v", symbol, err)
 			}
 

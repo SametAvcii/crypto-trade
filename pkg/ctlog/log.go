@@ -1,7 +1,7 @@
 package ctlog
 
 import (
-	"github.com/SametAvcii/crypto-trade/pkg/database"
+	"github.com/SametAvcii/crypto-trade/internal/clients/database"
 	"github.com/SametAvcii/crypto-trade/pkg/entities"
 )
 

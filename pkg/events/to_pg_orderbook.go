@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/IBM/sarama"
-	"github.com/SametAvcii/crypto-trade/pkg/cache"
+	"github.com/SametAvcii/crypto-trade/internal/clients/cache"
+	"github.com/SametAvcii/crypto-trade/internal/clients/database"
 	"github.com/SametAvcii/crypto-trade/pkg/config"
 	"github.com/SametAvcii/crypto-trade/pkg/consts"
 	"github.com/SametAvcii/crypto-trade/pkg/ctlog"
-	"github.com/SametAvcii/crypto-trade/pkg/database"
 	"github.com/SametAvcii/crypto-trade/pkg/dtos"
 	"github.com/SametAvcii/crypto-trade/pkg/entities"
 	"go.mongodb.org/mongo-driver/bson"
@@ -25,16 +25,30 @@ type PgOrderBookHandler struct{}
 
 func (d *PgOrderBookHandler) HandleMessage(msg *sarama.ConsumerMessage) {
 	log.Printf("Received message from topic %s", msg.Topic)
-	var payload dtos.OrderBook
-	if err := json.Unmarshal(msg.Value, &payload); err != nil {
+	var mongoData dtos.MongoData
+	if err := json.Unmarshal([]byte(msg.Value), &mongoData); err != nil {
 		ctlog.CreateLog(&entities.Log{
-			Title:   "Error unmarshalling message for Postgres",
-			Message: "Error unmarshalling message into BSON: " + err.Error(),
+			Title:   "Error unmarshalling message for candlestick signal",
+			Message: "Error unmarshalling outer message structure: " + err.Error(),
 			Type:    "error",
-			Entity:  "order-book",
+			Entity:  "candlestick",
 			Data:    string(msg.Value),
 		})
-		log.Printf("Error unmarshalling message for Postgres: %v", err)
+		log.Printf("Error unmarshalling outer message structure: %v", err)
+		return
+	}
+
+	var payload dtos.OrderBook
+	if err := json.Unmarshal([]byte(mongoData.Value), &payload); err != nil {
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Error unmarshalling candlestick data",
+			Message: "Error unmarshalling value field into CandlestickWs: " + err.Error(),
+			Type:    "error",
+			Entity:  "candlestick",
+			Data:    mongoData.Value,
+		})
+		log.Printf("Error unmarshalling value field into CandlestickWs: %v", err)
+		return
 	}
 
 	if err := UpdateOrderBookData(payload.Symbol, payload.Bids, payload.Asks); err != nil {
@@ -84,7 +98,7 @@ func UpdateOrderBookData(symbol string, bids, asks [][]string) error {
 			Data:    fmt.Sprintf("Symbol: %s, Asks: %v", symbol, asks),
 		})
 	}
-	
+
 	newBidMap := make(map[string]string)
 	for _, bid := range bids {
 		newBidMap[bid[0]] = bid[1]

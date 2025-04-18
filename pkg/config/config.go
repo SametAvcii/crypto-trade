@@ -37,19 +37,11 @@ type Consumer struct {
 }
 
 type Kafka struct {
-	Brokers []string `yaml:"brokers"`
-	Topics  struct {
-		ATopic string `yaml:"a_topic"`
-		BTopic string `yaml:"b_topic"`
-		CTopic string `yaml:"c_topic"`
-		DTopic string `yaml:"d_topic"`
-		ETopic string `yaml:"e_topic"`
-		FTopic string `yaml:"f_topic"`
-	} `yaml:"topics"`
-	MaxRetry       int  `yaml:"max_retry"`
-	MaxMessageSize int  `yaml:"max_message_size"`
-	ReturnErrors   bool `yaml:"return_errors"`
-	ReturnSucces   bool `yaml:"return_succes"`
+	Brokers        []string `yaml:"brokers"`
+	MaxRetry       int      `yaml:"max_retry"`
+	MaxMessageSize int      `yaml:"max_message_size"`
+	ReturnErrors   bool     `yaml:"return_errors"`
+	ReturnSucces   bool     `yaml:"return_succes"`
 }
 
 type Redis struct {

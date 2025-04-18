@@ -6,10 +6,11 @@ import (
 	"log"
 
 	"github.com/IBM/sarama"
+	"github.com/SametAvcii/crypto-trade/internal/clients/database"
+	"github.com/SametAvcii/crypto-trade/internal/clients/kafka"
 	"github.com/SametAvcii/crypto-trade/pkg/config"
 	"github.com/SametAvcii/crypto-trade/pkg/consts"
 	"github.com/SametAvcii/crypto-trade/pkg/ctlog"
-	"github.com/SametAvcii/crypto-trade/pkg/database"
 	"github.com/SametAvcii/crypto-trade/pkg/dtos"
 	"github.com/SametAvcii/crypto-trade/pkg/entities"
 	"go.mongodb.org/mongo-driver/bson"
@@ -20,6 +21,7 @@ import (
 type MongoHandler struct{}
 
 func (d *MongoHandler) HandleMessage(msg *sarama.ConsumerMessage) {
+
 	mongoData, err := insertMessageToMongo(msg)
 	if err != nil {
 		ctlog.CreateLog(&entities.Log{
@@ -51,7 +53,7 @@ func (d *MongoHandler) HandleMessage(msg *sarama.ConsumerMessage) {
 		return
 	}
 
-	client := KafkaClientNew()
+	client := kafka.KafkaClientNew()
 	pgTopic := getPgTopic(msg.Topic)
 	if pgTopic == "" {
 		ctlog.CreateLog(&entities.Log{
@@ -123,8 +125,8 @@ func insertMessageToMongo(msg *sarama.ConsumerMessage) (*mongo.InsertOneResult, 
 
 func getPgTopic(topic string) string {
 	switch topic {
-	case consts.AggTradeTopic:
-		return consts.PgAggTradeTopic
+	case consts.CandleStickTopic:
+		return consts.PgCandleStickTopic
 	case consts.OrderBookTopic:
 		return consts.PgOrderBookTopic
 	default:
@@ -134,8 +136,8 @@ func getPgTopic(topic string) string {
 
 func getCollectionName(topic string) string {
 	switch topic {
-	case consts.AggTradeTopic:
-		return consts.CollectionNameTrade
+	case consts.CandleStickTopic:
+		return consts.CollectionNameCandleStick
 	case consts.OrderBookTopic:
 		return consts.CollectionNameOrder
 	default:

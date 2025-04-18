@@ -20,12 +20,12 @@ func TestSignalInterval_FromDto(t *testing.T) {
 			dto: &dtos.AddSignalIntervalReq{
 				Symbol:     "BTCUSDT",
 				Interval:   "1h",
-				ExchangeId: "binance",
+				ExchangeId: "550e8400-e29b-41d4-a716-446655440000",
 			},
 			want: &SignalInterval{
 				Symbol:     "btcusdt",
 				Interval:   "1h",
-				ExchangeID: uuid.New(),
+				ExchangeID: uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
 			},
 			wantErr: false,
 		},
@@ -60,17 +60,17 @@ func TestSignalInterval_UpdateFromDto(t *testing.T) {
 			initial: &SignalInterval{
 				Symbol:     "btcusdt",
 				Interval:   "1h",
-				ExchangeID: uuid.New(),
+				ExchangeID: uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
 			},
 			dto: dtos.UpdateSignalIntervalReq{
 				Symbol:     "ETHUSDT",
 				Interval:   "4h",
-				ExchangeId: "kucoin",
+				ExchangeId: "550e8400-e29b-41d4-a716-446655440000",
 			},
 			want: &SignalInterval{
 				Symbol:     "ethusdt",
 				Interval:   "4h",
-				ExchangeID: uuid.New(),
+				ExchangeID: uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
 			},
 			wantErr: false,
 		},
@@ -79,7 +79,7 @@ func TestSignalInterval_UpdateFromDto(t *testing.T) {
 			initial: &SignalInterval{
 				Symbol:     "btcusdt",
 				Interval:   "1h",
-				ExchangeID: uuid.New(),
+				ExchangeID: uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
 			},
 			dto: dtos.UpdateSignalIntervalReq{
 				Symbol: "ETHUSDT",
@@ -87,7 +87,7 @@ func TestSignalInterval_UpdateFromDto(t *testing.T) {
 			want: &SignalInterval{
 				Symbol:     "ethusdt",
 				Interval:   "1h",
-				ExchangeID: uuid.New(),
+				ExchangeID: uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
 			},
 			wantErr: false,
 		},

@@ -3,11 +3,12 @@ package main
 import (
 	"log"
 
-	"github.com/SametAvcii/crypto-trade/pkg/cache"
+	"github.com/SametAvcii/crypto-trade/internal/clients/cache"
+	"github.com/SametAvcii/crypto-trade/internal/clients/database"
+	"github.com/SametAvcii/crypto-trade/internal/clients/kafka"
 	"github.com/SametAvcii/crypto-trade/pkg/config"
 	"github.com/SametAvcii/crypto-trade/pkg/consts"
 	"github.com/SametAvcii/crypto-trade/pkg/ctlog"
-	"github.com/SametAvcii/crypto-trade/pkg/database"
 	"github.com/SametAvcii/crypto-trade/pkg/entities"
 	"github.com/SametAvcii/crypto-trade/pkg/events"
 	"github.com/SametAvcii/crypto-trade/pkg/server"
@@ -24,10 +25,10 @@ func StartApp() {
 	cache.InitRedis(config.Redis)
 	go cache.RedisAlive(config.Redis)
 
-	events.InitKafka(config.Kafka)
-	go events.CheckKafkaAlive(config.Kafka)
+	kafka.InitKafka(config.Kafka)
+	go kafka.CheckKafkaAlive(config.Kafka)
 
-	stream := events.NewStream(database.PgClient(), events.KafkaClientNew())
+	stream := events.NewStream(database.PgClient(), kafka.KafkaClientNew())
 
 	//running all streams
 	/*go func() {
@@ -89,4 +90,3 @@ func StartApp() {
 	server.LaunchHttpServer(config.App, config.Allows)
 
 }
-

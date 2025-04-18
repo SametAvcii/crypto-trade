@@ -4,50 +4,48 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"sync"
 	"time"
 
 	"github.com/SametAvcii/crypto-trade/pkg/config"
+	"github.com/SametAvcii/crypto-trade/pkg/consts"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var (
 	mongoClient *mongo.Client
-	mongoOnce   sync.Once
-	mongoErr    error
 	MongoAlive  bool
 )
 
 func InitMongo(cfg config.Mongo) {
-	mongoOnce.Do(func() {
-		const (
-			maxRetries    = 5
-			retryInterval = 5 * time.Second
-		)
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
+	const (
+		maxRetries    = consts.MaxRetries
+		retryInterval = consts.RetryDelay
+	)
 
-		uri := buildMongoURI(cfg)
-		clientOptions := options.Client().ApplyURI(uri)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-		var err error
-		for attempt := 1; attempt <= maxRetries; attempt++ {
-			if err = connectToMongo(ctx, clientOptions); err == nil {
-				break
-			}
+	uri := buildMongoURI(cfg)
+	clientOptions := options.Client().ApplyURI(uri)
 
-			log.Printf("Failed to connect to MongoDB (attempt %d/%d): %v", attempt, maxRetries, err)
-			time.Sleep(retryInterval)
+	var err error
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		if err = connectToMongo(ctx, clientOptions); err == nil {
+			break
 		}
 
-		if err != nil {
-			log.Fatalf("MongoDB connection failed after %d attempts: %v", maxRetries, err)
-		}
+		log.Printf("Failed to connect to MongoDB (attempt %d/%d): %v", attempt, maxRetries, err)
+		time.Sleep(retryInterval)
+	}
 
-		log.Println("MongoDB connection initialized successfully.")
-	})
+	if err != nil {
+		log.Fatalf("MongoDB connection failed after %d attempts: %v", maxRetries, err)
+	}
+
+	log.Println("MongoDB connection initialized successfully.")
+
 }
 
 func buildMongoURI(cfg config.Mongo) string {

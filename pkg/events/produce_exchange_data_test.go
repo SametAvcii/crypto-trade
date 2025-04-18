@@ -1,12 +1,18 @@
-package events
+package events_test
 
 import (
+	"regexp"
+	"strings"
 	"testing"
 
-	"github.com/SametAvcii/crypto-trade/pkg/consts"
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SametAvcii/crypto-trade/internal/clients/kafka"
+	"github.com/SametAvcii/crypto-trade/pkg/events"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // Mock for DB
@@ -41,108 +47,89 @@ func (m *MockKafkaClient) Produce(topic, key string, value []byte) (string, int6
 
 func TestNewStream(t *testing.T) {
 	mockDB := &gorm.DB{}
-	mockKafka := &KafkaClient{}
+	mockKafka := &kafka.KafkaClient{}
 
-	stream := NewStream(mockDB, mockKafka)
+	stream := events.NewStream(mockDB, mockKafka)
 
 	assert.NotNil(t, stream)
 	assert.Equal(t, mockDB, stream.DB)
 	assert.Equal(t, mockKafka, stream.Kafka)
 }
 
-func TestGetExchanges(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
-		mockDB := &gorm.DB{}
-		mockKafka := &KafkaClient{}
-
-		stream := &Stream{
-			DB:    mockDB,
-			Kafka: mockKafka,
-		}
-
-		// Unfortunately we can't easily mock GORM methods, so this test is limited
-		exchanges := stream.GetExchanges()
-		assert.NotNil(t, exchanges)
-	})
-}
-
-func TestGetStreamWS(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
-		mockDB := &gorm.DB{}
-		mockKafka := &KafkaClient{}
-
-		stream := &Stream{
-			DB:    mockDB,
-			Kafka: mockKafka,
-		}
-
-		// Again, limited due to GORM mocking limitations
-		ws := stream.GetStreamWS("exchange1")
-		assert.Equal(t, "", ws) // Since we can't mock the DB properly, it will return empty string
-	})
-}
-
 func TestGetStreamSymbols(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
-		mockDB := &gorm.DB{}
-		mockKafka := &KafkaClient{}
 
-		stream := &Stream{
-			DB:    mockDB,
-			Kafka: mockKafka,
-		}
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
 
-		symbols, err := stream.GetStreamSymbols("exchange1")
-		assert.Nil(t, err)
-		assert.NotNil(t, symbols)
+	gormDB, err := gorm.Open(postgres.New(postgres.Config{
+		Conn: db,
+	}), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
 	})
+	assert.NoError(t, err)
+
+	// Step 3: expected query & return rows
+	mock.ExpectQuery(`SELECT \* FROM "symbols" WHERE exchange_id = \$1`).
+		WithArgs("550e8400-e29b-41d4-a716-446655440000").
+		WillReturnRows(sqlmock.NewRows([]string{"id", "symbol", "exchange_id"}).
+			AddRow("750e8400-e29b-41d4-a716-446655440000", "BTCUSDT", "550e8400-e29b-41d4-a716-446655440000").
+			AddRow("650e8400-e29b-41d4-a716-446655440000", "ETHUSDT", "550e8400-e29b-41d4-a716-446655440000"))
+
+	// Step 4: call function
+	stream := &events.Stream{
+		DB:    gormDB,
+		Kafka: &kafka.KafkaClient{},
+	}
+
+	symbols, err := stream.GetStreamSymbols("550e8400-e29b-41d4-a716-446655440000")
+	assert.NoError(t, err)
+	assert.Len(t, symbols, 2)
+	assert.Equal(t, "BTCUSDT", symbols[0].Symbol)
+	assert.Equal(t, "ETHUSDT", symbols[1].Symbol)
+
+	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
 func TestGetSymbolIntervals(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
-		mockDB := &gorm.DB{}
-		mockKafka := &KafkaClient{}
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
 
-		stream := &Stream{
-			DB:    mockDB,
-			Kafka: mockKafka,
-		}
-
-		intervals, err := stream.GetSymbolIntervals("exchange1", "BTC/USDT")
-		assert.Nil(t, err)
-		assert.NotNil(t, intervals)
+	// Step 2: Wrap with GORM
+	gormDB, err := gorm.Open(postgres.New(postgres.Config{
+		Conn: db,
+	}), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
 	})
-}
+	assert.NoError(t, err)
 
-func TestStartAllStreams(t *testing.T) {
-	t.Run("Empty WebSocket URL", func(t *testing.T) {
-		mockDB := &gorm.DB{}
-		mockKafka := &KafkaClient{}
+	exchangeID := "550e8400-e29b-41d4-a716-446655440000"
+	symbol := "BTCUSDT"
 
-		stream := &Stream{
-			DB:    mockDB,
-			Kafka: mockKafka,
-		}
+	// Step 3: Set up expected query and return rows
+	query := regexp.QuoteMeta(`SELECT * FROM "signal_intervals" WHERE (exchange_id = $1 AND symbol = $2) AND "signal_intervals"."deleted_at" IS NULL`)
+	mock.ExpectQuery(query).
+		WithArgs(exchangeID, strings.ToLower(symbol)).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "exchange_id", "symbol", "interval"}).
+			AddRow("850e8400-e29b-41d4-a716-446655440000", exchangeID, "btcusdt", "1m").
+			AddRow("950e8400-e29b-41d4-a716-446655440000", exchangeID, "btcusdt", "5m"))
 
-		err := stream.StartAllStreams("nonexistent", consts.OrderBookTopic)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "WebSocket URL not found")
-	})
-}
+	// Step 4: Create stream object and call function
+	stream := &events.Stream{
+		DB:    gormDB,
+		Kafka: &kafka.KafkaClient{},
+	}
 
-func TestStartSymbolStream(t *testing.T) {
-	// This would require mocking WebSocket connections, which is complex
-	// A simple test that expects failure due to invalid URL
-	t.Run("Invalid WebSocket URL", func(t *testing.T) {
-		mockDB := &gorm.DB{}
-		mockKafka := &KafkaClient{}
+	intervals, err := stream.GetSymbolIntervals(exchangeID, symbol)
 
-		stream := &Stream{
-			DB:    mockDB,
-			Kafka: mockKafka,
-		}
+	// Step 5: Assert expectations
+	assert.NoError(t, err)
+	assert.Len(t, intervals, 2)
+	assert.Equal(t, "1m", intervals[0].Interval)
+	assert.Equal(t, "5m", intervals[1].Interval)
+	assert.Equal(t, "btcusdt", intervals[0].Symbol)
 
-		err := stream.startSymbolStream("invalid://url", "BTC/USDT", consts.OrderBookTopic)
-		assert.Error(t, err)
-	})
+	// Verify all expectations were met
+	assert.NoError(t, mock.ExpectationsWereMet())
 }

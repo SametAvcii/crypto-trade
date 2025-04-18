@@ -24,6 +24,7 @@ func (s *SignalInterval) FromDto(dto *dtos.AddSignalIntervalReq) error {
 	s.IsActive = 1
 	return nil
 }
+
 func (s *SignalInterval) ToDto() dtos.AddSignalIntervalRes {
 	return dtos.AddSignalIntervalRes{
 		ID:       s.ID.String(),
@@ -31,6 +32,7 @@ func (s *SignalInterval) ToDto() dtos.AddSignalIntervalRes {
 		Interval: s.Interval,
 	}
 }
+
 func (s *SignalInterval) UpdateFromDto(dto dtos.UpdateSignalIntervalReq) error {
 	if dto.Symbol != "" {
 		s.Symbol = strings.ToLower(dto.Symbol)
