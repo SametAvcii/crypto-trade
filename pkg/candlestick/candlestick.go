@@ -1,14 +1,15 @@
 package candlestick
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 
+	"github.com/SametAvcii/crypto-trade/internal/clients/database"
 	"github.com/SametAvcii/crypto-trade/pkg/config"
 	"github.com/SametAvcii/crypto-trade/pkg/consts"
 	"github.com/SametAvcii/crypto-trade/pkg/ctlog"
-	"github.com/SametAvcii/crypto-trade/internal/clients/database"
 	"github.com/SametAvcii/crypto-trade/pkg/dtos"
 	"github.com/SametAvcii/crypto-trade/pkg/entities"
 	"github.com/SametAvcii/crypto-trade/pkg/utils"
@@ -18,7 +19,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetCandleSticksAndUpdate(exchangeId, symbol string, interval string, limit int) ([]entities.Candlestick, error) {
+func GetCandleSticksAndUpdate(ctx context.Context, exchangeId, symbol string, interval string, limit int) ([]entities.Candlestick, error) {
 	var (
 		mongoClient = database.MongoClient()
 		collection  = mongoClient.Database(config.ReadValue().Mongo.Database).Collection(consts.CollectionNameCandleStick)
@@ -26,7 +27,19 @@ func GetCandleSticksAndUpdate(exchangeId, symbol string, interval string, limit 
 		exchange    entities.Exchange
 	)
 
-	database.Where("id= ?", exchangeId).First(&exchange)
+	err := database.Where("id= ?", exchangeId).First(&exchange).Error
+	if err != nil {
+		log.Printf("Error fetching exchange from PostgreSQL: %v", err)
+		ctlog.CreateLog(&entities.Log{
+			Title:   "Error fetching exchange from PostgreSQL",
+			Message: "Error fetching exchange from PostgreSQL: " + err.Error(),
+			Type:    "error",
+			Entity:  "exchange",
+			Data:    fmt.Sprintf("Exchange ID: %s, Error: %s", exchangeId, err.Error()),
+		})
+		return nil, err
+	}
+
 	api := utils.NewAPI(exchange.RestUrl)
 
 	var url string
@@ -39,7 +52,7 @@ func GetCandleSticksAndUpdate(exchangeId, symbol string, interval string, limit 
 	}
 	var klines [][]interface{}
 
-	err := api.Get(url, nil, &klines)
+	err = api.Get(url, nil, &klines)
 	if err != nil {
 		log.Printf("Error getting candlestick data: %v", err)
 		ctlog.CreateLog(&entities.Log{
@@ -89,7 +102,7 @@ func GetCandleSticksAndUpdate(exchangeId, symbol string, interval string, limit 
 
 		filter := bson.M{"symbol": symbol, "interval": interval}
 		opts := options.FindOne().SetSort(bson.D{{Key: "openTime", Value: -1}})
-		err := collection.FindOne(nil, filter, opts).Decode(&lastCandlestick)
+		err := collection.FindOne(ctx, filter, opts).Decode(&lastCandlestick)
 
 		if err != nil && err != mongo.ErrNoDocuments {
 			log.Printf("Error fetching last candlestick: %v", err)
@@ -104,7 +117,7 @@ func GetCandleSticksAndUpdate(exchangeId, symbol string, interval string, limit 
 		}
 
 		if lastCandlestick.OpenTime < kline.OpenTime {
-			_, err := collection.InsertOne(nil, kline)
+			_, err := collection.InsertOne(ctx, kline)
 			if err != nil {
 				log.Printf("Error inserting candlestick into MongoDB: %v", err)
 				ctlog.CreateLog(&entities.Log{

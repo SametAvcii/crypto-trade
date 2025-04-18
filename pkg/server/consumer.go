@@ -3,7 +3,9 @@ package server
 import (
 	"fmt"
 	"net"
+	"net/http"
 
+	"github.com/SametAvcii/crypto-trade/internal/clients/database"
 	"github.com/SametAvcii/crypto-trade/pkg/config"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -36,6 +38,25 @@ func LaunchConsumerServer(appc config.Consumer) {
 
 	// Prometheus metrics endpoint
 	app.GET("/metrics", gin.WrapH(promhttp.Handler()))
+
+	app.GET("/healthz", func(c *gin.Context) {
+		c.String(http.StatusOK, "OK")
+	})
+
+	db := database.PgClient()
+
+	app.GET("/readyz", func(c *gin.Context) {
+		sqlDB, err := db.DB()
+		if err != nil {
+			c.String(http.StatusInternalServerError, "Database not ready")
+			return
+		}
+		if err := sqlDB.Ping(); err != nil {
+			c.String(http.StatusInternalServerError, "Database not reachable")
+			return
+		}
+		c.String(http.StatusOK, "READY")
+	})
 
 	// Log mesajı
 	fmt.Println("Server is running on port " + appc.Port)

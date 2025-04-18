@@ -83,7 +83,7 @@ func (s *SignalHandlerCandleStick) HandleMessage(msg *sarama.ConsumerMessage) {
 				Data:    string(msg.Value),
 			})
 
-			candleSticks, err = candlestick.GetCandleSticksAndUpdate(interval.ExchangeID.String(), payload.Symbol, interval.Interval, 200)
+			candleSticks, err = candlestick.GetCandleSticksAndUpdate(context.Background(), interval.ExchangeID.String(), payload.Symbol, interval.Interval, 200)
 			if err != nil {
 				ctlog.CreateLog(&entities.Log{
 					Title:   "Error fetching candlesticks from API",

@@ -38,3 +38,6 @@ func PrometheusMiddleware() gin.HandlerFunc {
 		}
 	}
 }
+
+//maybe write jwt middleware for routes
+ 
