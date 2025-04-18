@@ -60,7 +60,6 @@ func StartConsumer() {
 	kafka.InitKafka(config.Kafka)
 	go kafka.CheckKafkaAlive(ctx, config.Kafka)
 
-	//TODO: fix this tomorrow
 	mongoDbConsumerOrderBook := kafka.Consumer{
 		Brokers: config.Kafka.Brokers,
 		GroupID: consts.DbOrderBookGroup,

@@ -4,21 +4,20 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"sync"
 	"time"
 
 	"github.com/SametAvcii/crypto-trade/pkg/config"
+	"github.com/SametAvcii/crypto-trade/pkg/consts"
 	"github.com/SametAvcii/crypto-trade/pkg/entities"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 var (
-	db          *gorm.DB
-	err         error
-	client_once sync.Once
-	Alive       bool
-	dsn         string
+	db    *gorm.DB
+	err   error
+	Alive bool
+	dsn   string
 )
 
 func InitDB(cfg config.Database) error {
@@ -42,21 +41,21 @@ func InitDB(cfg config.Database) error {
 		time.Sleep(retryInterval)
 	}
 	if err != nil {
-		return fmt.Errorf("Database connection failed after %d attempts: %w", maxRetries, err)
+		return fmt.Errorf("database connection failed after %d attempts: %w", maxRetries, err)
 	}
 
 	sqldb, err := db.DB()
 	if err != nil {
-		return fmt.Errorf("Failed to get DB from GORM: %w", err)
+		return fmt.Errorf("failed to get DB from GORM: %w", err)
 	}
 
-	sqldb.SetMaxIdleConns(3)
-	sqldb.SetMaxOpenConns(90)
-	sqldb.SetConnMaxLifetime(time.Hour)
-	sqldb.SetConnMaxIdleTime(2 * time.Second)
+	sqldb.SetMaxIdleConns(consts.MaxIdleConn)
+	sqldb.SetMaxOpenConns(consts.MaxOpenConn)
+	sqldb.SetConnMaxLifetime(consts.MaxLifetime)
+	sqldb.SetConnMaxIdleTime(consts.MaxIdleTime)
 
 	if err := runMigrations(); err != nil {
-		return fmt.Errorf("Database migration failed: %w", err)
+		return fmt.Errorf("database migration failed: %w", err)
 	}
 
 	Seed()
